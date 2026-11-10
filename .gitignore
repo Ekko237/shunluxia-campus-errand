@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+_work/
+.claude/
+HANDOFF_CLOUD.md
+ITERATION_LOG.md

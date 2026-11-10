@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b7a55" />
+    <meta name="color-scheme" content="light only" />
+    <script>
+      // 部署会删掉旧版的打包文件。浏览器若用了缓存里的旧 HTML，主脚本或样式会 404、页面白屏。
+      // 这时带一个不缓存的参数整页刷新一次，拿到新 HTML；sessionStorage 防止循环刷新。
+      addEventListener('error', function (e) {
+        var t = e.target, u = t && (t.src || t.href) || ''
+        if (!t || !/^(SCRIPT|LINK)$/.test(t.tagName) || u.indexOf('/assets/') < 0) return
+        try { if (sessionStorage.getItem('stale-reload')) return; sessionStorage.setItem('stale-reload', '1') } catch (_) { return }
+        location.replace(location.pathname + '?v=' + Date.now() + location.hash)
+      }, true)
+    </script>
+    <title>顺路侠 · 校园跑腿互助</title>
+    <link rel="stylesheet" href="/campus-errand/fonts/smiley-v2/result.css" media="print" onload="this.media='all'" />
+    <link rel="icon" type="image/png" href="/campus-errand/brand/favicon-v2.png" />
+    <link rel="apple-touch-icon" href="/campus-errand/brand/apple-touch-icon-v2.png" />
+    <meta name="description" content="顺路侠：校内实名认证的跑腿互助平台。代取快递、代买、占座，赏金托管，信用越高能接的单越好。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="顺路侠 · 本来就要经过，顺手捎一下" />
+    <meta property="og:description" content="校园跑腿互助平台产品原型：只把顺路的单派给本来就要走那条路的同学。" />
+    <meta property="og:image" content="https://ekko237.github.io/campus-errand/og-v2.jpg" />
+    <meta property="og:url" content="https://ekko237.github.io/campus-errand/" />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div id="root"><div style="min-height:100dvh;display:grid;place-items:center;background:#f4f5f3;font-family:system-ui,sans-serif;color:#17201b"><div style="display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700"><img src="/campus-errand/brand/logo-v2.png" width="36" height="36" alt="" style="border-radius:8px" />顺路侠<span style="font-weight:500;color:#5b665f;font-size:15px">正在打开……</span></div></div></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

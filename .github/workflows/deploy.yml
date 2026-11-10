@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Keep previous builds' assets (cached old HTML can still load)
+        run: |
+          BASE=https://ekko237.github.io/campus-errand
+          T=$(date +%s)
+          touch /tmp/hist.txt
+          curl -fsSL "$BASE/asset-history.txt?t=$T" -o /tmp/hist.txt || true
+          curl -fsSL "$BASE/?t=$T" -o /tmp/live.html || true
+          grep -oE 'assets/[A-Za-z0-9._-]+' /tmp/live.html >> /tmp/hist.txt || true
+          for f in $(grep -oE 'assets/index-[A-Za-z0-9_-]+\.js' /tmp/live.html | sort -u); do
+            curl -fsSL "$BASE/$f?t=$T" | grep -oE '[A-Za-z0-9_-]+-[A-Za-z0-9_-]{8}\.(js|css)' | sed 's#^#assets/#' >> /tmp/hist.txt || true
+          done
+          for f in $(sort -u /tmp/hist.txt | grep -E '^assets/[A-Za-z0-9._-]+$' | tail -n 400); do
+            [ -f "dist/$f" ] || curl -fsSL "$BASE/$f" -o "dist/$f" || rm -f "dist/$f"
+          done
+          ( ls dist/assets | sed 's#^#assets/#'; cat /tmp/hist.txt ) | grep -E '^assets/[A-Za-z0-9._-]+$' | sort -u | tail -n 400 > dist/asset-history.txt
+          echo "kept $(wc -l < dist/asset-history.txt) asset paths"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
