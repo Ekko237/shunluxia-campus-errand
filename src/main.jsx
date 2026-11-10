@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import '@fontsource-variable/geist'
 import './index.css'
+import './i18n'
 import Landing from './landing/Landing.jsx'
 // 部署后旧版本的分包文件会被删掉：页面若停在旧版本，按需加载原型会 404。
 // 这时整页刷新一次拿到新版本；用 sessionStorage 防止反复刷新。
@@ -40,7 +41,9 @@ if (/[?&]reset=1\b/.test(window.location.search)) {
   try {
     for (const st of [localStorage, sessionStorage]) Object.keys(st).filter((k) => k.startsWith('shunluxia')).forEach((k) => st.removeItem(k))
   } catch { /* 无痕模式下没有本地存储 */ }
-  window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+  const q = new URLSearchParams(window.location.search)
+  q.delete('reset')
+  window.history.replaceState(null, '', window.location.pathname + (q.size ? `?${q}` : '') + window.location.hash)
 }
 // 标题字加载期间给 <html> 挂 fl（index.css 里让替身字先斜过来），得意黑到了就摘掉
 {

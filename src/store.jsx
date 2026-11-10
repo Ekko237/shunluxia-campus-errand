@@ -1,7 +1,9 @@
 import { createContext, useContext, useEffect, useReducer, useCallback, useState } from 'react'
 import { seedTasks, seedAccounts, CREDIT_INIT, levelOf, COMPENSATE } from './data'
+import { EN } from './i18n'
 
-const KEY = 'shunluxia:v3'
+// 中英两套演示数据分开存：切换语言后各走各的，不会中英混在一起
+const KEY = EN ? 'shunluxia:v3:en' : 'shunluxia:v3'
 const Ctx = createContext(null)
 
 function fresh() {
