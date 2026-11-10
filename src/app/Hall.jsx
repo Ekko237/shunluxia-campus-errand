@@ -10,6 +10,7 @@ import { CaretDown, MagnifyingGlass, ArrowRight } from '@phosphor-icons/react'
 import { useStore } from '../store'
 import { TYPES, TYPE_KEYS, B, BUILDINGS, dist, fmtDist, detourMin, detourMeters, RUNNER_HOME, levelOf, minCreditFor, POSTER_WARN } from '../data'
 import { TypeTag, UrgentTag, Panel, Empty, Btn, left, spring, gi } from '../ui'
+import { EN, tr } from '../i18n'
 const MapPin = gi('pin')
 const Clock = gi('clock')
 const LockSimple = gi('lock')
@@ -17,7 +18,7 @@ const WarningOctagon = gi('alert')
 const ShieldCheck = gi('shield-check')
 const Lightning = gi('bolt')
 
-const SORTS = [['route', '顺我路'], ['dist', '距离最近'], ['reward', '赏金最高'], ['deadline', '截止最早']]
+const SORTS = [['route', tr('顺我路', 'On my way')], ['dist', tr('距离最近', 'Nearest')], ['reward', tr('赏金最高', 'Top reward')], ['deadline', tr('截止最早', 'Due first')]]
 let loadedOnce = false
 
 export function TaskCard({ t, me, role, route, n = 0 }) {
@@ -36,11 +37,11 @@ export function TaskCard({ t, me, role, route, n = 0 }) {
       </div>
       <h3 className="mt-3 text-[17px] font-semibold leading-snug">{t.title}</h3>
       {t.from !== t.to ? (
-        <p className="mt-2.5 flex items-center gap-2 text-[15px] text-muted" aria-label={`${B[t.from]?.name} 到 ${B[t.to]?.name}`}>
+        <p className="mt-2.5 flex items-center gap-2 text-[15px] text-muted" aria-label={tr(`${B[t.from]?.name} 到 ${B[t.to]?.name}`, `${B[t.from]?.name} to ${B[t.to]?.name}`)}>
           <span className="size-2.5 shrink-0 rounded-full bg-ink" />
-          <span className="shrink-0 whitespace-nowrap">{B[t.from]?.name.replace(/（.*?）/, '')}</span>
+          <span className={EN ? 'min-w-0' : 'shrink-0 whitespace-nowrap'}>{B[t.from]?.name.replace(/（.*?）|\s*\(.*?\)/, '')}</span>
           <span aria-hidden="true" className="h-0 min-w-6 flex-1 border-t-2 border-dashed border-line" />
-          <span className="shrink-0 whitespace-nowrap">{B[t.to]?.name}</span>
+          <span className={EN ? 'min-w-0 text-right' : 'shrink-0 whitespace-nowrap'}>{B[t.to]?.name}</span>
           <span className="size-2.5 shrink-0 rounded-full bg-accent" />
         </p>
       ) : (
@@ -50,18 +51,18 @@ export function TaskCard({ t, me, role, route, n = 0 }) {
         <span className="inline-flex items-center gap-1"><Clock size={16} />{left(t.deadline)}</span>
         {route ? (() => {
           const m = detourMin(route.from, route.to, t)
-          return <span className={`tnum inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold ${m <= 5 ? 'bg-accent-soft text-accent' : 'bg-sunken text-ink'}`}>{n > 0 && <span className="grid size-[18px] place-items-center rounded-full bg-accent text-[11px] font-bold text-on-accent">{n}</span>}{m <= 5 ? '顺路 · ' : ''}多走 {m} 分钟</span>
-        })() : (role === 'runner' ? <span className="tnum">距你 {fmtDist(d)}</span> : null)}
-        <span className="basis-full">{t.posterId === 'poster' ? (role === 'poster' ? '我发布的' : `${t.posterName} · 信用 ${t.posterCredit}`) : `${t.posterName} · 信用 ${t.posterCredit}`}</span>
+          return <span className={`tnum inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold ${m <= 5 ? 'bg-accent-soft text-accent' : 'bg-sunken text-ink'}`}>{n > 0 && <span className="grid size-[18px] place-items-center rounded-full bg-accent text-[11px] font-bold text-on-accent">{n}</span>}{EN ? `${m <= 5 ? 'On your way · ' : ''}${m} min detour` : <>{m <= 5 ? '顺路 · ' : ''}多走 {m} 分钟</>}</span>
+        })() : (role === 'runner' ? <span className="tnum">{EN ? `${fmtDist(d)} away` : <>距你 {fmtDist(d)}</>}</span> : null)}
+        <span className="basis-full">{t.posterId === 'poster' ? (role === 'poster' ? tr('我发布的', 'Posted by me') : tr(`${t.posterName} · 信用 ${t.posterCredit}`, `${t.posterName} · Credit ${t.posterCredit}`)) : tr(`${t.posterName} · 信用 ${t.posterCredit}`, `${t.posterName} · Credit ${t.posterCredit}`)}</span>
       </div>
       {t.posterId !== 'poster' && t.posterCredit < POSTER_WARN && (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-danger-soft px-3 py-1.5 text-sm font-medium text-danger">
-          <WarningOctagon size={16} weight="fill" />发单人信用偏低（{t.posterCredit}）
+          <WarningOctagon size={16} weight="fill" />{EN ? `Low requester credit (${t.posterCredit})` : <>发单人信用偏低（{t.posterCredit}）</>}
         </p>
       )}
       {locked && (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-sunken px-3 py-1.5 text-sm font-medium text-muted">
-          <LockSimple size={16} weight="bold" />需信用 ≥ {need} 才能接（你 {me.credit}）
+          <LockSimple size={16} weight="bold" />{EN ? `Needs credit ≥ ${need} (yours: ${me.credit})` : <>需信用 ≥ {need} 才能接（你 {me.credit}）</>}
         </p>
       )}
     </Link>
@@ -70,7 +71,7 @@ export function TaskCard({ t, me, role, route, n = 0 }) {
 
 function Skeleton() {
   return (
-    <div className="space-y-3" aria-label="加载中">
+    <div className="space-y-3" aria-label={tr('加载中', 'Loading')}>
       {[0, 1, 2].map((i) => (
         <div key={i} className="animate-pulse rounded-2xl bg-surface p-4 ring-1 ring-line">
           <div className="flex gap-2"><div className="h-7 w-16 rounded-full bg-sunken" /><div className="ml-auto h-7 w-12 rounded-full bg-sunken" /></div>
@@ -93,12 +94,12 @@ function RoleBanner() {
     const from = mine[0]?.from || 'cainiao', to = mine[0]?.to || 'mei5'
     const passing = ROUTES.filter((r) => detourMin(r.from, r.to, { from, to }) <= 5)
     return (
-      <Panel className="flex items-center gap-3 p-4">
+      <Panel className={`flex items-center gap-3 p-4 ${EN ? 'max-sm:flex-wrap' : ''}`}>
         <span className="flex shrink-0 -space-x-2" aria-hidden="true">
           {(passing.length ? passing : [0]).slice(0, 3).map((_, k) => <img key={k} src={`${import.meta.env.BASE_URL}icons/avatar-runner-v2.webp`} width={30} height={30} alt="" className={`size-[30px] rounded-full bg-surface ring-2 ring-surface ${passing.length ? '' : 'opacity-40 grayscale'}`} />)}
         </span>
-        <p className="flex-1 text-[15px] leading-snug text-muted">从<b className="whitespace-nowrap text-ink">{B[from].name.replace(/（.*?）/, '')}</b>到<b className="whitespace-nowrap text-ink">{B[to].name}</b>，有 <b className="text-accent">{passing.length} 条</b>同学常走的路正好经过</p>
-        <Btn size="sm" onClick={() => nav('/app/publish')} className="relative before:absolute before:inset-x-0 before:-inset-y-1 before:content-['']">发一单</Btn>
+        <p className={`flex-1 text-[15px] leading-snug text-muted ${EN ? 'max-sm:min-w-[calc(100%-3rem)]' : ''}`}>{EN ? <>From <b className="text-ink">{B[from].name.replace(/（.*?）|\s*\(.*?\)/, '')}</b> to <b className="text-ink">{B[to].name}</b>? Classmates pass right by on <b className="text-accent">{passing.length} usual {passing.length === 1 ? 'route' : 'routes'}</b>.</> : <>从<b className="whitespace-nowrap text-ink">{B[from].name.replace(/（.*?）|\s*\(.*?\)/, '')}</b>到<b className="whitespace-nowrap text-ink">{B[to].name}</b>，有 <b className="text-accent">{passing.length} 条</b>同学常走的路正好经过</>}</p>
+        <Btn size="sm" onClick={() => nav('/app/publish')} className="max-sm:ml-auto relative before:absolute before:inset-x-0 before:-inset-y-1 before:content-['']">{tr('发一单', 'Post one')}</Btn>
       </Panel>
     )
   }
@@ -106,8 +107,8 @@ function RoleBanner() {
     return (
       <Panel className="flex items-center gap-3 p-4">
         <ShieldCheck size={28} className="shrink-0 text-accent" />
-        <p className="flex-1 text-[15px] leading-snug">未认证只能浏览。用学号或校园邮箱认证后才能接单。</p>
-        <Btn size="sm" onClick={() => nav(state.tour.active && state.tour.taskId ? `/app/verify?back=/app/task/${state.tour.taskId}` : '/app/verify')}>去认证</Btn>
+        <p className="flex-1 text-[15px] leading-snug">{tr('未认证只能浏览。用学号或校园邮箱认证后才能接单。', 'Unverified accounts can only browse. Verify with your student ID or campus email to take orders.')}</p>
+        <Btn size="sm" onClick={() => nav(state.tour.active && state.tour.taskId ? `/app/verify?back=/app/task/${state.tour.taskId}` : '/app/verify')}>{tr('去认证', 'Get verified')}</Btn>
       </Panel>
     )
   }
@@ -115,7 +116,7 @@ function RoleBanner() {
   return (
     <Link to="/app/credit" className="flex items-center gap-3 rounded-2xl bg-accent-soft p-4">
       <span className="tnum text-3xl font-bold text-accent">{me.credit}</span>
-      <p className="flex-1 text-[15px] leading-snug">信用等级<b>「{lv.name}」</b>：{lv.desc}</p>
+      <p className="flex-1 text-[15px] leading-snug">{EN ? <>Credit level <b>{lv.name}</b>: {lv.desc}</> : <>信用等级<b>「{lv.name}」</b>：{lv.desc}</>}</p>
       <ArrowRight size={18} className="text-accent" />
     </Link>
   )
@@ -183,27 +184,27 @@ export default function Hall() {
           <div className="px-2 pt-3">
           <div className="flex items-center gap-3">
             <span aria-hidden="true" className="hidden shrink-0 items-center sm:flex"><span className="size-2.5 rounded-full bg-ink" /><span className="h-0.5 w-5 bg-ink" /><span className="size-2.5 rounded-full bg-accent ring-2 ring-accent-soft" /><span className="h-0.5 w-5 bg-ink" /><span className="size-2.5 rounded-full bg-ink" /></span>
-            <p className="min-w-0 flex-1 text-[15px] font-semibold leading-snug"><span className="whitespace-nowrap">{B[route.from].name.replace(/（.*?）/, '')} → {B[route.to].name.replace(/（.*?）/, '')}</span> <span className="block whitespace-nowrap text-sm font-normal text-accent sm:inline">{routeHits.length} 单顺路</span></p>
-            <button onClick={() => setShowMap((v) => !v)} aria-expanded={showMap} className="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-accent">{showMap ? '收起地图' : '看地图'}</button>
-            <button onClick={() => setEditRoute((v) => !v)} aria-expanded={editRoute} className="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-accent">{editRoute ? '收起路线' : '换条路'}</button>
+            <p className="min-w-0 flex-1 text-[15px] font-semibold leading-snug"><span className={EN ? '' : 'whitespace-nowrap'}>{B[route.from].name.replace(/（.*?）|\s*\(.*?\)/, '')} → {B[route.to].name.replace(/（.*?）|\s*\(.*?\)/, '')}</span> <span className="block whitespace-nowrap text-sm font-normal text-accent sm:inline">{EN ? `${routeHits.length} on your way` : <>{routeHits.length} 单顺路</>}</span></p>
+            <button onClick={() => setShowMap((v) => !v)} aria-expanded={showMap} className="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-accent">{showMap ? tr('收起地图', 'Hide map') : tr('看地图', 'Show map')}</button>
+            <button onClick={() => setEditRoute((v) => !v)} aria-expanded={editRoute} className="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm font-semibold text-accent">{editRoute ? tr('收起路线', 'Done') : tr('换条路', 'Change route')}</button>
           </div>
           <AnimatePresence initial={false}>
             {editRoute && (
               <motion.div initial={reduce ? false : { height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
                 <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 pt-3 text-[15px] sm:grid-cols-[auto_1fr_auto_1fr]">
-                  <span className="text-muted">从</span>
-                  <span className="relative"><select aria-label="出发地" value={route.from} onChange={setLeg('from')} className="h-10 w-full appearance-none rounded-full bg-surface pl-4 pr-10 text-[15px] font-semibold ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-accent">
-                    {BUILDINGS.map((b) => <option key={b.id} value={b.id} disabled={b.id === route.to}>{b.name}{b.id === route.to ? '（已是目的地）' : ''}</option>)}
+                  <span className="text-muted">{tr('从', 'From')}</span>
+                  <span className="relative"><select aria-label={tr('出发地', 'Start')} value={route.from} onChange={setLeg('from')} className="h-10 w-full appearance-none rounded-full bg-surface pl-4 pr-10 text-[15px] font-semibold ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-accent">
+                    {BUILDINGS.map((b) => <option key={b.id} value={b.id} disabled={b.id === route.to}>{b.name}{b.id === route.to ? tr('（已是目的地）', ' (destination)') : ''}</option>)}
                   </select><CaretDown size={16} weight="bold" className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted" /></span>
-                  <span className="text-muted">去</span>
-                  <span className="relative"><select aria-label="目的地" value={route.to} onChange={setLeg('to')} className="h-10 w-full appearance-none rounded-full bg-surface pl-4 pr-10 text-[15px] font-semibold ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-accent">
-                    {BUILDINGS.map((b) => <option key={b.id} value={b.id} disabled={b.id === route.from}>{b.name}{b.id === route.from ? '（已是出发地）' : ''}</option>)}
+                  <span className="text-muted">{tr('去', 'To')}</span>
+                  <span className="relative"><select aria-label={tr('目的地', 'Destination')} value={route.to} onChange={setLeg('to')} className="h-10 w-full appearance-none rounded-full bg-surface pl-4 pr-10 text-[15px] font-semibold ring-1 ring-inset ring-line focus:outline-none focus:ring-2 focus:ring-accent">
+                    {BUILDINGS.map((b) => <option key={b.id} value={b.id} disabled={b.id === route.from}>{b.name}{b.id === route.from ? tr('（已是出发地）', ' (start)') : ''}</option>)}
                   </select><CaretDown size={16} weight="bold" className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-muted" /></span>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-          <p className="mt-2 hidden text-sm text-muted sm:block">按捎上每单要多走几分钟排，5 分钟以内标为顺路，绿点就是路上的单。</p>
+          <p className="mt-2 hidden text-sm text-muted sm:block">{tr('按捎上每单要多走几分钟排，5 分钟以内标为顺路，绿点就是路上的单。', 'Sorted by the extra minutes each order adds. Under 5 min counts as on your way. Green dots are orders along your route.')}</p>
           </div>
         </div>
   )
@@ -214,23 +215,23 @@ export default function Hall() {
           <WarningOctagon size={24} weight="fill" className="shrink-0" />
           <div className="flex-1 text-[15px]">
             <p className="font-semibold">{loadError}</p>
-            <p className="mt-0.5">已自动恢复为初始示例数据，可以继续体验。</p>
+            <p className="mt-0.5">{tr('已自动恢复为初始示例数据，可以继续体验。', 'Sample data was restored automatically, so you can keep going.')}</p>
           </div>
-          <button onClick={() => setErrDismissed(true)} className="text-sm font-semibold underline">知道了</button>
+          <button onClick={() => setErrDismissed(true)} className="text-sm font-semibold underline">{tr('知道了', 'Got it')}</button>
         </div>
       )}
       <RoleBanner />
 
       <div className="flex items-end justify-between">
-        <h1 className="font-display text-[28px] leading-tight">任务大厅</h1>
-        <span className="text-sm text-muted">{list.filter((t) => t.deadline > Date.now()).length} 个待接</span>
+        <h1 className="font-display text-[28px] leading-tight">{tr('任务大厅', 'Order board')}</h1>
+        <span className="text-sm text-muted">{EN ? `${list.filter((t) => t.deadline > Date.now()).length} open` : <>{list.filter((t) => t.deadline > Date.now()).length} 个待接</>}</span>
       </div>
 
-      <div className="no-scrollbar -mx-4 -mt-1 mb-4 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-1 sm:gap-2 sm:px-1" role="group" aria-label="按类型筛选">
-        {[['all', '全部'], ...TYPE_KEYS.map((k) => [k, TYPES[k].label])].map(([k, label]) => {
+      <div className="no-scrollbar -mx-4 -mt-1 mb-4 flex gap-1.5 overflow-x-auto px-4 py-1 sm:-mx-1 sm:gap-2 sm:px-1" role="group" aria-label={tr('按类型筛选', 'Filter by type')}>
+        {[['all', tr('全部', 'All')], ...TYPE_KEYS.map((k) => [k, TYPES[k].label])].map(([k, label]) => {
           return (
             <button key={k} onClick={() => setType(k)} aria-pressed={type === k}
-              className={`relative before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3 text-[14px] font-semibold transition sm:px-4 sm:text-[15px] ${type === k ? 'bg-ink text-bg' : 'bg-surface text-ink ring-1 ring-line'}`}>
+              className={`relative before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] inline-flex h-10 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-full px-3 text-[14px] font-semibold transition sm:px-4 sm:text-[15px] ${type === k ? 'bg-ink text-bg' : 'bg-surface text-ink ring-1 ring-line'}`}>
 {label}
             </button>
           )
@@ -238,7 +239,7 @@ export default function Hall() {
 
       </div>
 
-      <div className="grid rounded-full bg-sunken p-1" style={{ gridTemplateColumns: `repeat(${sorts.length}, minmax(0, 1fr))` }} role="group" aria-label="排序">
+      <div className="grid rounded-full bg-sunken p-1" style={{ gridTemplateColumns: `repeat(${sorts.length}, minmax(0, 1fr))` }} role="group" aria-label={tr('排序', 'Sort')}>
         {sorts.map(([k, label]) => (
           <button key={k} onClick={() => setSort(k)} aria-pressed={sortBy === k}
             className={`relative h-9 whitespace-nowrap rounded-full text-sm font-semibold transition before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] ${sortBy === k ? 'bg-surface text-ink shadow-sm' : 'text-muted'}`}>{label}</button>
@@ -246,22 +247,22 @@ export default function Hall() {
       </div>
 
       {/* 两个开关单独一行，不和类型挤在一起 */}
-      <div className="-mt-1 flex flex-wrap items-center justify-end gap-2" role="group" aria-label="更多筛选">
+      <div className="-mt-1 flex flex-wrap items-center justify-end gap-2" role="group" aria-label={tr('更多筛选', 'More filters')}>
         <button onClick={() => setUrgentOnly((v) => !v)} aria-pressed={urgentOnly}
           className={`relative before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-[''] inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3.5 text-[15px] font-semibold transition ${urgentOnly ? 'bg-ink text-bg' : 'bg-surface text-ink ring-1 ring-line'}`}>
-          <Lightning size={16} weight="fill" />加急
+          <Lightning size={16} weight="fill" />{tr('加急', 'Urgent')}
         </button>
         {runnerView && <button onClick={() => setGoodPoster((v) => !v)} aria-pressed={goodPoster}
           className={`relative before:absolute before:inset-x-0 before:-inset-y-1.5 before:content-[''] inline-flex h-9 shrink-0 items-center gap-1 rounded-full px-3.5 text-[15px] font-semibold transition ${goodPoster ? 'bg-ink text-bg' : 'bg-surface text-ink ring-1 ring-line'}`}>
-          <ShieldCheck size={16} weight="fill" />信用 ≥ 85
+          <ShieldCheck size={16} weight="fill" />{tr('信用 ≥ 85', 'Credit ≥ 85')}
         </button>}
       </div>
 
       {sortBy === 'route' && !openId && (deskSlot ? createPortal(mapBlock, deskSlot) : mapBlock)}
 
       {loading ? <Skeleton /> : list.length === 0 ? (
-        <Empty img="empty-search" alt="空纸箱和放大镜" title="这个分类暂时没人发单" hint="换个分类看看，或者自己发一单，附近顺路的同学会看到。"
-          action={<Btn variant="ghost" onClick={() => { setType('all'); setUrgentOnly(false); setGoodPoster(false) }}>看全部任务</Btn>} />
+        <Empty img="empty-search" alt={tr('空纸箱和放大镜', 'An empty box and a magnifying glass')} title={tr('这个分类暂时没人发单', 'No orders in this category yet')} hint={tr('换个分类看看，或者自己发一单，附近顺路的同学会看到。', 'Try another category, or post one yourself. Classmates walking by will see it.')}
+          action={<Btn variant="ghost" onClick={() => { setType('all'); setUrgentOnly(false); setGoodPoster(false) }}>{tr('看全部任务', 'Show all orders')}</Btn>} />
       ) : (
         <motion.div layout={!reduce} className="space-y-3">
           <AnimatePresence initial={false}>
@@ -274,7 +275,7 @@ export default function Hall() {
         </motion.div>
       )}
       {state.role === 'poster' && !loading && (
-        <Btn className="w-full" variant="ink" onClick={() => act('role', { role: 'poster' })} as={Link} to="/app/publish">发布跑腿任务</Btn>
+        <Btn className="w-full" variant="ink" onClick={() => act('role', { role: 'poster' })} as={Link} to="/app/publish">{tr('发布跑腿任务', 'Post an errand')}</Btn>
       )}
     </div>
   )

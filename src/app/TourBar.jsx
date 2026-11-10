@@ -4,31 +4,34 @@ import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { X, ArrowRight } from '@phosphor-icons/react'
 import { useStore } from '../store'
 import { gi } from '../ui'
+import { tr, EN } from '../i18n'
 const Confetti = gi('confetti')
 
 
 // 每一大步要点几下（和指引圈出的目标一一对应，一共 21 下；减少动态效果时没有放款动画，第 7 步少一下「继续」）
 const SUB = [3, 3, 2, 1, 3, 2, 3, 3]
 // 每一步为什么要点它：导览条第二行，12 个字以内
-const WHY = ['赏金先冻结，送到才放款', '认证过的同学才能接单', '接单后才看得到取件码', '取到了，发单人那边会看到', '当面核对送达码，防冒领', '确认收货后，钱才放出去', '好评差评都记进信用', '两边互评，信用是双向的']
+const WHY = EN
+  ? ['The reward is held in escrow until delivery', 'Only verified students can take orders', 'The pickup code unlocks after you accept', 'Picked up, and the requester can see it', 'Check the delivery code in person, so nobody else grabs it', 'Money is released only after the requester confirms', 'Every rating goes into the credit score', 'Both sides rate each other, credit runs both ways']
+  : ['赏金先冻结，送到才放款', '认证过的同学才能接单', '接单后才看得到取件码', '取到了，发单人那边会看到', '当面核对送达码，防冒领', '确认收货后，钱才放出去', '好评差评都记进信用', '两边互评，信用是双向的']
 
 // 根据演示任务的真实状态推出「下一步该谁做什么」
 export function tourStep(state) {
   const { tour, accounts } = state
   if (!tour.active) return null
   const t = state.tasks.find((x) => x.id === tour.taskId)
-  if (!t) return { n: 1, who: 'poster', text: '发布一个任务', to: '/app/publish?tour=1', cta: '去发布' }
+  if (!t) return { n: 1, who: 'poster', text: tr('发布一个任务', 'Post an order'), to: '/app/publish?tour=1', cta: tr('去发布', 'Post') }
   if (t.status === 'open') {
-    if (!accounts.runner.verified) return { n: 2, who: 'runner', text: '切到跑腿人阿远：先做校园认证', to: `/app/verify?back=/app/task/${t.id}`, cta: '去认证' }
-    return { n: 3, who: 'runner', text: '切到跑腿人：接下这一单', to: `/app/task/${t.id}`, cta: '去接单' }
+    if (!accounts.runner.verified) return { n: 2, who: 'runner', text: tr('切到跑腿人阿远：先做校园认证', 'Switch to Yuan, the runner: get verified first'), body: tr('先做校园认证', 'Get verified first'), to: `/app/verify?back=/app/task/${t.id}`, cta: tr('去认证', 'Verify') }
+    return { n: 3, who: 'runner', text: tr('切到跑腿人：接下这一单', 'Switch to runner: take this order'), body: tr('接下这一单', 'Take this order'), to: `/app/task/${t.id}`, cta: tr('去接单', 'Take it') }
   }
-  if (t.status === 'ongoing' && !t.picked) return { n: 4, who: 'runner', text: '跑腿人：取到后点「我已取到」', to: `/app/task/${t.id}`, cta: '去取件' }
-  if (t.status === 'ongoing') return { n: 5, who: 'runner', text: '跑腿人：送到后提交送达凭证', to: `/app/task/${t.id}`, cta: '去送达' }
-  if (t.status === 'delivered') return { n: 6, who: 'poster', text: '切回发单人：确认放款', to: `/app/task/${t.id}`, cta: '去确认' }
-  if (t.status === 'completed' && !t.ratingByPoster) return { n: 7, who: 'poster', text: '发单人：给跑腿人打分', to: `/app/task/${t.id}`, cta: '去评价' }
-  if (t.status === 'completed' && !t.ratingByRunner) return { n: 8, who: 'runner', text: '切换身份去互评：也给对方打分', to: `/app/task/${t.id}`, cta: '去互评' }
-  if (t.status === 'completed') return { n: 9, who: 'runner', text: '看信用和收入', to: '/app/me', cta: '去看看', final: true }
-  return { n: 9, who: null, text: '这单走了申诉或取消分支，演示结束', to: '/app/orders', cta: '看订单', final: true }
+  if (t.status === 'ongoing' && !t.picked) return { n: 4, who: 'runner', text: tr('跑腿人：取到后点「我已取到」', 'Runner: tap “Picked up” once you have it'), body: tr('取到后点「我已取到」', 'Tap “Picked up” once you have it'), to: `/app/task/${t.id}`, cta: tr('去取件', 'Pick up') }
+  if (t.status === 'ongoing') return { n: 5, who: 'runner', text: tr('跑腿人：送到后提交送达凭证', 'Runner: submit proof of delivery'), body: tr('送到后提交送达凭证', 'Submit proof of delivery'), to: `/app/task/${t.id}`, cta: tr('去送达', 'Deliver') }
+  if (t.status === 'delivered') return { n: 6, who: 'poster', text: tr('切回发单人：确认放款', 'Switch back to requester: release the payment'), body: tr('确认放款', 'Release the payment'), to: `/app/task/${t.id}`, cta: tr('去确认', 'Confirm') }
+  if (t.status === 'completed' && !t.ratingByPoster) return { n: 7, who: 'poster', text: tr('发单人：给跑腿人打分', 'Requester: rate the runner'), body: tr('给跑腿人打分', 'Rate the runner'), to: `/app/task/${t.id}`, cta: tr('去评价', 'Rate') }
+  if (t.status === 'completed' && !t.ratingByRunner) return { n: 8, who: 'runner', text: tr('切换身份去互评：也给对方打分', 'Switch roles: rate the requester too'), body: tr('也给对方打分', 'Rate the requester too'), to: `/app/task/${t.id}`, cta: tr('去互评', 'Rate back') }
+  if (t.status === 'completed') return { n: 9, who: 'runner', text: tr('看信用和收入', 'See your credit and earnings'), to: '/app/me', cta: tr('去看看', 'Take a look'), final: true }
+  return { n: 9, who: null, text: tr('这单走了申诉或取消分支，演示结束', 'This order went to a dispute or was cancelled. The demo ends here.'), to: '/app/orders', cta: tr('看订单', 'See orders'), final: true }
 }
 
 // 导览要找的按钮在哪一块：电脑版右边开着一单时在详情栏，否则在主内容区
@@ -49,13 +52,13 @@ export default function TourBar({ wide = false }) {
   // 第 2 步在订单页上：页面自己有「切到跑腿人」和「认证后才能接单」，一路点下去就到认证页
   const here = step && !step.final && roleOk && (samePage || (onTask && step.n === 2))
   // 已经是这个身份了，就不再说「切到跑腿人」
-  const text0 = step && step.who === state.role ? step.text.replace(/^((切(到|回))?(跑腿人|发单人)(阿远)?|切换身份去互评)[，：]?/, '') : step?.text
+  const text0 = step && step.who === state.role ? step.body || step.text : step?.text
   const arrived = step?.final && loc.pathname === step.to
   // 已经到了「我的」，就不再叫人「去我的看看」
   // 窄屏时「指哪点哪」把「点这里：××」交给导览条显示（不在页面上浮气泡，免得压住说明）
   const [coach, setCoach] = useState('')
   useEffect(() => { const f = (e) => setCoach(e.detail || ''); window.addEventListener('coach-text', f); return () => window.removeEventListener('coach-text', f) }, [])
-  const text = arrived ? '导览完成' : coach || text0
+  const text = arrived ? tr('导览完成', 'Tour complete') : coach || text0
   // 细进度线：每一大步要点几下和指引圈出的目标一一对应；同一大步里每换一个「点这里」就往前走一格，不会点了三下还停在原地
   const seen = useRef({ n: 0, set: new Set() })
   if (step && seen.current.n !== step.n) seen.current = { n: step.n, set: new Set() }
@@ -72,7 +75,7 @@ export default function TourBar({ wide = false }) {
     const reveal = () => {
       if (!el || touched) return
       const head = (document.querySelector('[data-tour-bar]') || document.querySelector('header'))?.getBoundingClientRect().bottom ?? 64
-      const navTop = document.querySelector('nav[aria-label="主导航"]')?.getBoundingClientRect().top ?? innerHeight
+      const navTop = document.querySelector(`nav[aria-label="${tr('主导航', 'Main navigation')}"]`)?.getBoundingClientRect().top ?? innerHeight
       const floor = navTop > innerHeight / 2 ? navTop : innerHeight
       const r = el.getBoundingClientRect()
       if (r.top >= head + 4 && r.bottom <= floor - 4) return
@@ -135,7 +138,7 @@ export default function TourBar({ wide = false }) {
           className="relative border-t border-line bg-ink text-bg">
           <motion.span aria-hidden="true" className="absolute bottom-0 left-0 h-[3px] w-full origin-left bg-accent" initial={false} animate={{ scaleX: progress }} transition={{ duration: reduce ? 0 : 0.35, ease: [0.16, 1, 0.3, 1] }} />
           <div data-tour-bar className={`mx-auto flex min-h-12 items-center gap-3 py-1.5 max-sm:min-h-14 ${wide ? 'max-w-[1440px] px-6' : 'max-w-xl px-4 xl:max-w-[66rem]'}`}>
-            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold opacity-70">{step.final ? <><Confetti size={18} weight="fill" className="text-accent" />走完了</> : <span className="tnum whitespace-nowrap rounded-full bg-bg/15 px-2 py-0.5"><span className="max-sm:hidden">第 {step.n} 步 / 共 8 步</span><span className="sm:hidden" aria-label={`第 ${step.n} 步，共 8 步`}>{step.n}/8</span></span>}</span>
+            <span className="inline-flex shrink-0 items-center gap-1 text-xs font-bold opacity-70">{step.final ? <><Confetti size={18} weight="fill" className="text-accent" />{tr('走完了', 'Done')}</> : <span className="tnum whitespace-nowrap rounded-full bg-bg/15 px-2 py-0.5"><span className="max-sm:hidden">{tr(`第 ${step.n} 步 / 共 8 步`, `Step ${step.n} of 8`)}</span><span className="sm:hidden" aria-label={tr(`第 ${step.n} 步，共 8 步`, `Step ${step.n} of 8`)}>{step.n}/8</span></span>}</span>
             {/* 文字和订单状态同一帧换，不等旧文字淡出；第二行写这一步为什么要点（右边有「带我去」按钮时窄屏放不下，只留第一行） */}
             <motion.p key={text} initial={reduce ? false : { opacity: 0.4 }} animate={{ opacity: 1 }} transition={{ duration: 0.15 }}
               className={`min-w-0 flex-1 text-[14px] font-semibold leading-snug md:text-[15px] ${coach ? 'text-accent-soft' : ''}`}>
@@ -145,7 +148,7 @@ export default function TourBar({ wide = false }) {
             {showGo && <button data-tour-go onClick={go} className="inline-flex h-11 shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-accent px-3.5 text-[14px] font-semibold text-on-accent active:scale-[0.98]">
               {step.cta}<ArrowRight size={14} weight="bold" />
             </button>}
-            <button onClick={() => act('tour', { tour: { active: false, dismissed: true } })} aria-label="退出指引" className="-mx-1.5 -my-1.5 grid size-11 shrink-0 place-items-center rounded-full opacity-70 hover:opacity-100"><X size={16} weight="bold" /></button>
+            <button onClick={() => act('tour', { tour: { active: false, dismissed: true } })} aria-label={tr('退出指引', 'Exit the tour')} className="-mx-1.5 -my-1.5 grid size-11 shrink-0 place-items-center rounded-full opacity-70 hover:opacity-100"><X size={16} weight="bold" /></button>
           </div>
         </motion.div>
       )}

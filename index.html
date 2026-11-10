@@ -29,6 +29,20 @@
   </head>
   <body>
     <div id="root"><div style="min-height:100dvh;display:grid;place-items:center;background:#f4f5f3;font-family:system-ui,sans-serif;color:#17201b"><div style="display:flex;align-items:center;gap:10px;font-size:18px;font-weight:700"><img src="/campus-errand/brand/logo-v2.png" width="36" height="36" alt="" style="border-radius:8px" />顺路侠<span style="font-weight:500;color:#5b665f;font-size:15px">正在打开……</span></div></div></div>
+    <script>
+      // 英文访客：加载页和网页标题先换成英文（定语言的规则和 src/i18n.js 一样）
+      (function () {
+        var q = (location.search.match(/[?&]lang=(en|zh)\b/) || [])[1], s = null
+        try { s = localStorage.getItem('ce-lang') } catch (_) {}
+        var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || 'zh']
+        var en = (q || s) ? (q || s) === 'en' : !langs.some(function (l) { return /^zh\b/i.test(l) })
+        if (!en) return
+        document.documentElement.lang = 'en'
+        document.title = 'Shunluxia · Campus errands on your way'
+        var b = document.querySelector('#root span')
+        if (b) { b.textContent = 'Loading…'; b.previousSibling.textContent = 'Shunluxia' }
+      })()
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

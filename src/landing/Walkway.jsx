@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { motion, useReducedMotion, useScroll, useSpring, useTransform, useMotionValueEvent } from 'motion/react'
+import { tr } from '../i18n'
 
 // 段与段之间的一小段路：阿远沿着点线从左往右走（立绘左右翻过来，朝右），走过的部分变成翠绿实线，读法和进度条一样；
 // 路的右头是下一站，他走到时站点亮起。整页因此一直是同一个人在走同一条路，滚到哪走到哪，不劫持滚动
@@ -29,7 +30,7 @@ export default function Walkway({ next }) {
             {here && !reduce && <motion.span key="ping" className="absolute inset-0 rounded-full bg-accent" initial={{ opacity: 0.6, scale: 1 }} animate={{ opacity: 0, scale: 2.6 }} transition={{ duration: 0.8, ease: 'easeOut' }} />}
           </span>
         </span>
-        <span className={`absolute bottom-0 right-0 whitespace-nowrap text-[14px] font-semibold transition-colors duration-300 ${lit ? 'text-accent' : 'text-muted'}`}>下一站 · {next}</span>
+        <span className={`absolute bottom-0 right-0 whitespace-nowrap text-[14px] font-semibold transition-colors duration-300 ${lit ? 'text-accent' : 'text-muted'}`}>{tr('下一站', 'Next stop')} · {next}</span>
         {reduce ? (
           <img src={`${BASE}brand/runner-v1.webp`} width={169} height={240} alt="" className="absolute bottom-9 left-1/2 h-14 w-auto max-w-none -translate-x-1/2 -scale-x-100 drop-shadow-[0_8px_8px_rgba(17,40,30,0.22)] md:bottom-10 md:h-16" />
         ) : (

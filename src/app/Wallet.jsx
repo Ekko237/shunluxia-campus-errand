@@ -4,16 +4,20 @@ import { motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft } from '@phosphor-icons/react'
 import { useMe } from '../store'
 import { Panel, Empty, spring } from '../ui'
+import { EN, tr } from '../i18n'
 
 const fmtMoney = (n) => `${n < 0 ? '-' : n > 0 ? '+' : ''}¥${Math.abs(+n.toFixed(2))}`
 const keyOf = (at, by) => {
   const d = new Date(at)
   return by === 'year' ? `${d.getFullYear()}` : `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
 }
-const titleOf = (k, by) => (by === 'year' ? `${k} 年` : `${k.slice(0, 4)} 年 ${Number(k.slice(5))} 月`)
+const titleOf = (k, by) => (EN
+  ? (by === 'year' ? k : new Date(Number(k.slice(0, 4)), Number(k.slice(5)) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))
+  : (by === 'year' ? `${k} 年` : `${k.slice(0, 4)} 年 ${Number(k.slice(5))} 月`))
 const when = (at, by) => {
   const d = new Date(at)
-  const hm = d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  const hm = d.toLocaleTimeString(EN ? 'en-US' : 'zh-CN', { hour: '2-digit', minute: '2-digit' })
+  if (EN) return `${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}, ${hm}`
   return by === 'year' ? `${d.getMonth() + 1} 月 ${d.getDate()} 日 ${hm}` : `${d.getDate()} 日 ${hm}`
 }
 
@@ -38,10 +42,10 @@ export default function Wallet() {
   const [by, setBy] = useState('month')
   const [kind, setKind] = useState('all')
   const runner = me.id === 'runner'
-  const inWord = runner ? '收入' : '入账'
+  const inWord = runner ? tr('收入', 'Income') : tr('入账', 'Money in')
 
   // 托管退回不算入账，从支出里减掉：不然冻结时记一次支出、退回时又记一次入账，两头都算
-  const refund = (l) => l.amount > 0 && l.label.includes('退回')
+  const refund = (l) => l.amount > 0 && l.label.includes(tr('退回', 'refunded'))
   const refunds = me.ledger.filter(refund).reduce((a, l) => a + l.amount, 0)
   const income = me.ledger.filter((l) => l.amount > 0 && !refund(l)).reduce((a, l) => a + l.amount, 0)
   const spend = me.ledger.filter((l) => l.amount < 0).reduce((a, l) => a - l.amount, 0) - refunds
@@ -67,15 +71,15 @@ export default function Wallet() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
-        <button onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav("/app"))} aria-label="返回" className="grid size-11 place-items-center rounded-full bg-surface ring-1 ring-line"><ArrowLeft size={20} weight="bold" /></button>
-        <h1 className="font-display text-[28px] leading-tight">{runner ? '收入流水' : '钱包流水'}</h1>
+        <button onClick={() => (window.history.state?.idx > 0 ? nav(-1) : nav("/app"))} aria-label={tr('返回', 'Back')} className="grid size-11 place-items-center rounded-full bg-surface ring-1 ring-line"><ArrowLeft size={20} weight="bold" /></button>
+        <h1 className="font-display text-[28px] leading-tight">{runner ? tr('收入流水', 'Income history') : tr('钱包流水', 'Wallet history')}</h1>
       </div>
 
       <div className="rounded-2xl bg-accent p-5 text-on-accent">
-        <p className="text-[15px] font-semibold opacity-90">可用余额</p>
+        <p className="text-[15px] font-semibold opacity-90">{tr('可用余额', 'Available balance')}</p>
         <p className="tnum text-5xl font-bold leading-none tracking-tight">¥{me.balance}</p>
         <dl className="mt-5 grid grid-cols-3 gap-2 border-t border-on-accent/20 pt-4">
-          {[[`累计${inWord}`, `¥${income}`], ['累计支出', `¥${spend}`], ['托管冻结', `¥${me.frozen}`]].map(([k, v]) => (
+          {[[EN ? (runner ? 'Total income' : 'Total in') : `累计${inWord}`, `¥${income}`], [tr('累计支出', 'Total spent'), `¥${spend}`], [tr('托管冻结', 'In escrow'), `¥${me.frozen}`]].map(([k, v]) => (
             <div key={k}>
               <dd className="tnum text-xl font-bold">{v}</dd>
               <dt className="text-sm opacity-80">{k}</dt>
@@ -85,14 +89,14 @@ export default function Wallet() {
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Segmented label="分组" value={by} onChange={setBy} options={[['month', '按月'], ['year', '按年']]} />
-        <Segmented label="类型" value={kind} onChange={setKind} options={[['all', '全部'], ['in', inWord], ['out', '支出']]} />
+        <Segmented label={tr('分组', 'Group by')} value={by} onChange={setBy} options={[['month', tr('按月', 'Monthly')], ['year', tr('按年', 'Yearly')]]} />
+        <Segmented label={tr('类型', 'Type')} value={kind} onChange={setKind} options={[['all', tr('全部', 'All')], ['in', tr(inWord, 'In')], ['out', tr('支出', 'Out')]]} />
       </div>
 
       {groups.length === 0 ? (
         <Panel>
-          <Empty img="empty-wallet" alt="只有一枚硬币的钱包" title={me.ledger.length ? '这个筛选下没有记录' : '还没有流水'}
-            hint={me.ledger.length ? '换个类型看看。' : runner ? <>完成第一单后，赏金会从托管放到<span className="whitespace-nowrap">这里，</span>按月份归档。</> : '发单、退款、充值都会记在这里。'} />
+          <Empty img="empty-wallet" alt={tr('只有一枚硬币的钱包', 'A wallet with a single coin')} title={me.ledger.length ? tr('这个筛选下没有记录', 'Nothing matches this filter') : tr('还没有流水', 'No transactions yet')}
+            hint={me.ledger.length ? tr('换个类型看看。', 'Try another type.') : runner ? (EN ? 'After your first order, the reward moves from escrow to here, sorted by month.' : <>完成第一单后，赏金会从托管放到<span className="whitespace-nowrap">这里，</span>按月份归档。</>) : tr('发单、退款、充值都会记在这里。', 'Orders, refunds and top-ups all show up here.')} />
         </Panel>
       ) : (
         <div key={by + kind} className="space-y-5">
@@ -103,7 +107,7 @@ export default function Wallet() {
                 <p className="tnum text-sm text-muted">
                   {g.inSum > 0 && <span className="text-accent">{inWord} ¥{g.inSum}</span>}
                   {g.inSum > 0 && g.outSum > 0 && <span className="mx-1.5">/</span>}
-                  {g.outSum > 0 && <span>支出 ¥{g.outSum}</span>}
+                  {g.outSum > 0 && <span>{tr('支出', 'Spent')} ¥{g.outSum}</span>}
                 </p>
               </div>
               <Panel className="divide-y divide-line">

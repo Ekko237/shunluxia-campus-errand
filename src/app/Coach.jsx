@@ -5,15 +5,18 @@ import { useReducedMotion } from 'motion/react'
 import { ArrowFatUp } from '@phosphor-icons/react'
 import { useStore } from '../store'
 import { tourStep } from './TourBar'
+import { tr, EN } from '../i18n'
 
 // 「指哪点哪」：导览每一步都在屏幕上圈出要点的那个东西，旁边一个小气泡写清楚点它干什么，其余地方轻轻压暗。
 // 压暗那一层不挡点击；点到别处不报错，气泡晃一下，提醒该点哪。
 // 找目标的顺序：身份不对 → 顶上的身份切换；不在这一步的页面 → 底部 / 左边导航里对应的标签，或导览条上的「带我去」；
 // 在页面上 → 弹窗里的主按钮、送达码输入框、评价星星，最后是导览条已经圈好的那个按钮。
 
-const ROLE = { poster: '发单人', runner: '跑腿人' }
+const ROLE = { poster: tr('发单人', 'Requester'), runner: tr('跑腿人', 'Runner') }
 // 切身份那一下要说清楚切过去干什么
-const WHY = { 2: '先做校园认证', 3: '去接这一单', 4: '去取件', 5: '去送达', 6: '确认收货、放款', 7: '给跑腿人打分', 8: '给发单人打分' }
+const WHY = EN
+  ? { 2: 'get verified first', 3: 'take this order', 4: 'pick it up', 5: 'deliver it', 6: 'confirm and release the payment', 7: 'rate the runner', 8: 'rate the requester' }
+  : { 2: '先做校园认证', 3: '去接这一单', 4: '去取件', 5: '去送达', 6: '确认收货、放款', 7: '给跑腿人打分', 8: '给发单人打分' }
 const vis = (el) => { if (!el) return false; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' }
 // 收起立刻收（不淡出，免得旧圈在旧位置多停一会儿）；出来时再淡入
 const cx0 = (r) => r.left + r.width / 2
@@ -27,42 +30,42 @@ function resolve(state, path) {
   if (step.final) {
     if (path === to) return null
     const go = document.querySelector('[data-tour-go]')
-    return go && { el: go, text: '点这里：看看信用和收入' }
+    return go && { el: go, text: tr('点这里：看看信用和收入', 'Tap here: see your credit and earnings') }
   }
   // 1 身份不对：页面里有「切换身份去互评」这种大按钮就圈它，没有才圈顶上的身份切换
   if (step.who && step.who !== state.role) {
     const swap = document.querySelector('[data-switch-role]')
-    if (swap && vis(swap)) return { el: swap, text: `点这里：切到${ROLE[step.who]}，${WHY[step.n] || '继续'}` }
-    const tab = [...document.querySelectorAll('[role=tablist][aria-label="切换角色"] [role=tab]')].find((b) => b.innerText.includes(ROLE[step.who]))
-    return tab && { el: tab, text: `切到${ROLE[step.who]}，${WHY[step.n] || '继续'}` }
+    if (swap && vis(swap)) return { el: swap, text: tr(`点这里：切到${ROLE[step.who]}，${WHY[step.n] || '继续'}`, `Tap here: switch to ${ROLE[step.who]}, ${WHY[step.n] || 'continue'}`) }
+    const tab = [...document.querySelectorAll(`[role=tablist][aria-label="${tr('切换角色', 'Switch role')}"] [role=tab]`)].find((b) => b.innerText.includes(ROLE[step.who]))
+    return tab && { el: tab, text: tr(`切到${ROLE[step.who]}，${WHY[step.n] || '继续'}`, `Switch to ${ROLE[step.who]}, ${WHY[step.n] || 'continue'}`) }
   }
   // 2 弹窗开着：送达码、评价、确认发布都在弹窗里
   const dlg = [...document.querySelectorAll('[role=dialog]:not([data-closing])')].filter(vis).pop()
   if (dlg) {
-    const code = dlg.querySelector('input[aria-label="4 位送达码"]')
+    const code = dlg.querySelector(`input[aria-label="${tr('4 位送达码', '4-digit delivery code')}"]`)
     const t = state.tasks.find((x) => x.id === state.tour.taskId)
     if (code && t && code.value !== t.deliverCode) {
       const pre = code.value && t.deliverCode.startsWith(code.value) ? code.value : ''
-      return { el: code.parentElement, text: pre ? `看${state.accounts.poster.name}手机上的码，补上后两位` : `看${state.accounts.poster.name}手机上的码，输入 4 位`, input: true }
+      return { el: code.parentElement, text: pre ? tr(`看${state.accounts.poster.name}手机上的码，补上后两位`, `Check the code on ${state.accounts.poster.name}'s phone, fill in the last two digits`) : tr(`看${state.accounts.poster.name}手机上的码，输入 4 位`, `Check the code on ${state.accounts.poster.name}'s phone, enter all 4 digits`), input: true }
     }
     // 还在淡入的按钮（放款动画最后才出来的「继续」）先不圈，免得绿圈套着一块空地
     const btn = [...dlg.querySelectorAll('button')].filter((b) => (b.classList.contains('bg-accent') || b.hasAttribute('data-coach-next')) && !b.disabled && vis(b) && +getComputedStyle(b).opacity > 0.9).pop()
-    return btn && { el: btn, text: `点这里：${label(btn)}` }
+    return btn && { el: btn, text: tr(`点这里：${label(btn)}`, `Tap here: ${label(btn)}`) }
   }
   // 3 认证页：认证完了点「现在回去接单」，没认证点「提交认证」（学号替你填好了）
   if (path.startsWith('/app/verify')) {
     // 只在认证这一栏里找（电脑版右栏还开着订单详情，别圈到那边去）；正在核验时先不指
     const root = document.querySelector('[data-tour-root]') || document.querySelector('main')
-    if ([...root.querySelectorAll('button')].some((b) => b.innerText.includes('核验中'))) return null
+    if ([...root.querySelectorAll('button')].some((b) => b.innerText.includes(tr('核验中', 'Checking')))) return null
     const btn = [...root.querySelectorAll('button')].find((b) => b.classList.contains('bg-accent') && !b.disabled && vis(b))
-    return btn && { el: btn, text: label(btn).includes('提交') ? '已替你填好，点这里：提交认证' : `点这里：${label(btn)}` }
+    return btn && { el: btn, text: label(btn).includes(tr('提交', 'Submit')) ? tr('已替你填好，点这里：提交认证', 'Filled in for you. Tap here: submit verification') : tr(`点这里：${label(btn)}`, `Tap here: ${label(btn)}`) }
   }
   // 4 不在这一步的页面：导航里有这一页就圈导航，没有就圈导览条上的「带我去」
   if (path !== to && !(step.n === 2 && path.startsWith('/app/task/'))) {
-    const tab = [...document.querySelectorAll('nav[aria-label="主导航"] a')].find((a) => a.getAttribute('href') === `#${to}` && vis(a))
-    if (tab) return { el: tab, text: `点这里：${label(tab)}`, nav: true }
+    const tab = [...document.querySelectorAll(`nav[aria-label="${tr('主导航', 'Main navigation')}"] a`)].find((a) => a.getAttribute('href') === `#${to}` && vis(a))
+    if (tab) return { el: tab, text: tr(`点这里：${label(tab)}`, `Tap here: ${label(tab)}`), nav: true }
     const go = document.querySelector('[data-tour-go]')
-    return go && { el: go, text: `点这里：${step.cta}` }
+    return go && { el: go, text: tr(`点这里：${step.cta}`, `Tap here: ${step.cta}`) }
   }
   // 5 在页面上：评价先点星，再提交
   let focus = document.querySelector('.tour-focus')
@@ -74,11 +77,11 @@ function resolve(state, path) {
   }
   if (focus.matches('[data-tour-target]')) {
     const submit = [...focus.querySelectorAll('button')].pop()
-    if (submit?.disabled) { const five = focus.querySelector('[role=radio][aria-label="5 星"]'); return five && { el: five, text: '点第 5 颗星，给个好评', input: true } }
-    return submit && { el: submit, text: '点这里：提交评价' }
+    if (submit?.disabled) { const five = focus.querySelector(`[role=radio][aria-label="${tr('5 星', '5 stars')}"]`); return five && { el: five, text: tr('点第 5 颗星，给个好评', 'Tap the 5th star to leave a good rating'), input: true } }
+    return submit && { el: submit, text: tr('点这里：提交评价', 'Tap here: submit rating') }
   }
   const t = label(focus)
-  return { el: focus, text: step.n === 1 ? `已填好，点这里：${t}` : `点这里：${t}` }
+  return { el: focus, text: step.n === 1 ? tr(`已填好，点这里：${t}`, `Filled in. Tap here: ${t}`) : tr(`点这里：${t}`, `Tap here: ${t}`) }
 }
 
 export default function Coach() {
@@ -142,9 +145,9 @@ export default function Coach() {
       const r0 = hit.el.getBoundingClientRect()
       if ((r0.top < 0 || r0.bottom > innerHeight) && scrolled.current !== hit.el && hit.el.closest('[role=dialog]')) { scrolled.current = hit.el; hit.el.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }) }
       // 页面上的目标被顶栏或底部导航挡住（矮屏、放大）：滚到可见区域中间，只滚一次
-      if (scrolled.current !== hit.el && !hit.el.closest('[role=dialog], header, nav[aria-label="主导航"], [data-tour-bar]')) {
+      if (scrolled.current !== hit.el && !hit.el.closest(`[role=dialog], header, nav[aria-label="${tr('主导航', 'Main navigation')}"], [data-tour-bar]`)) {
         const hb = (document.querySelector('[data-tour-bar]') || document.querySelector('header'))?.getBoundingClientRect().bottom ?? 0
-        const nt = document.querySelector('nav[aria-label="主导航"]')?.getBoundingClientRect().top ?? innerHeight
+        const nt = document.querySelector(`nav[aria-label="${tr('主导航', 'Main navigation')}"]`)?.getBoundingClientRect().top ?? innerHeight
         const ft = nt > innerHeight / 2 ? nt : innerHeight
         // 自己算距离：按钮只是被底部导航压着时，scrollIntoView 的 nearest 认为它在视口里，不会滚
         if (r0.top < hb + 8 || r0.bottom > ft - 8) { scrolled.current = hit.el; window.scrollBy({ top: r0.top < hb + 8 ? r0.top - hb - 16 : r0.bottom - ft + 56, behavior: reduce ? 'auto' : 'smooth' }) }
@@ -234,7 +237,7 @@ export default function Coach() {
       const el = cur.current, T = tip.current
       // 点中了：导览条上这一句「点这里」立刻收掉，下一步的字等新目标停稳再出来
       if (el && el.contains(e.target)) { held.current = { el, at: Date.now(), text: tip.current?.dataset.text }; barText.current = ''; window.dispatchEvent(new CustomEvent('coach-text', { detail: '' })); return }
-      if (!el || !T || e.target.closest?.('[data-tour-bar], [role=tablist][aria-label="切换角色"]')) return
+      if (!el || !T || e.target.closest?.(`[data-tour-bar], [role=tablist][aria-label="${tr('切换角色', 'Switch role')}"]`)) return
       if (e.target.closest?.('[role=dialog]') && !el.closest('[role=dialog]')) return
       if (reduce) return
       const W0 = T.style.opacity === '0' ? point.current : T

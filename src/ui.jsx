@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { motion, AnimatePresence, useReducedMotion, useIsPresent } from 'motion/react'
 import { X, Star } from '@phosphor-icons/react'
 import { TYPES } from './data'
+import { EN, tr } from './i18n'
 
 // 表达内容的小图标用生成图（public/icons/ic-*.webp），和 Phosphor 同样的用法：<X size={20} className="..." />
 export function gi(name, v = 'v1') {
@@ -52,16 +53,18 @@ export function TypeTag({ type }) {
 }
 
 // 订单状态：和类型标签同一种胶囊，出了岔子的（申诉、退款、取消）用灰底
-const STATUS_TEXT = { open: '待接单', ongoing: '进行中', delivered: '待确认', completed: '已完成', disputed: '申诉中', refunded: '已退款', cancelled: '已取消' }
+const STATUS_TEXT = EN
+  ? { open: 'Open', ongoing: 'In progress', delivered: 'To confirm', completed: 'Done', disputed: 'Disputed', refunded: 'Refunded', cancelled: 'Cancelled' }
+  : { open: '待接单', ongoing: '进行中', delivered: '待确认', completed: '已完成', disputed: '申诉中', refunded: '已退款', cancelled: '已取消' }
 export function StatusTag({ t }) {
   const off = ['refunded', 'cancelled', 'disputed'].includes(t.status)
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${off ? 'bg-sunken text-ink' : 'bg-accent-soft text-accent'}`}>{t.status === 'ongoing' && t.picked ? '送达中' : STATUS_TEXT[t.status]}</span>
+  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-sm font-semibold ${off ? 'bg-sunken text-ink' : 'bg-accent-soft text-accent'}`}>{t.status === 'ongoing' && t.picked ? tr('送达中', 'Delivering') : STATUS_TEXT[t.status]}</span>
 }
 
 export function UrgentTag() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-ink px-2.5 py-1 text-sm font-semibold text-bg">
-      <Lightning size={14} weight="fill" />加急
+      <Lightning size={14} weight="fill" />{tr('加急', 'Urgent')}
     </span>
   )
 }
@@ -69,7 +72,7 @@ export function UrgentTag() {
 export function VerifiedBadge({ small }) {
   return (
     <span className={`inline-flex items-center gap-1 rounded-full bg-accent-soft font-medium text-accent ${small ? 'px-2 py-0.5 text-xs' : 'px-2.5 py-1 text-sm'}`}>
-      <SealCheck size={small ? 14 : 16} weight="fill" />校园认证
+      <SealCheck size={small ? 14 : 16} weight="fill" />{tr('校园认证', 'Verified student')}
     </span>
   )
 }
@@ -77,11 +80,11 @@ export function VerifiedBadge({ small }) {
 // 头像：生成图（发单人小满、跑腿人阿远），其他人回退为文字头像
 export function Avatar({ who, name = '', size = 44 }) {
   if (who === 'poster' || who === 'runner') {
-    return <img src={`${import.meta.env.BASE_URL}icons/avatar-${who}-v2.webp`} width={size} height={size} alt={`${name}的头像`} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
+    return <img src={`${import.meta.env.BASE_URL}icons/avatar-${who}-v2.webp`} width={size} height={size} alt={tr(`${name}的头像`, `${name}'s avatar`)} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />
   }
   return (
     <span aria-hidden="true" className="grid shrink-0 place-items-center rounded-full bg-accent-soft font-bold text-accent" style={{ width: size, height: size, fontSize: size * 0.42 }}>
-      {name.slice(-1)}
+      {EN ? name.charAt(0).toUpperCase() : name.slice(-1)}
     </span>
   )
 }
@@ -107,7 +110,7 @@ function SheetBody({ onClose, title, children }) {
     if (!present || !panel.current) return
     const els = () => [...panel.current.querySelectorAll('button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter((e) => !e.disabled && e.offsetParent)
     const prev = document.activeElement
-    if (!panel.current.contains(document.activeElement)) (els().find((e) => !e.matches('[aria-label="关闭"]')) || panel.current).focus({ preventScroll: true })
+    if (!panel.current.contains(document.activeElement)) (els().find((e) => !e.matches(`[aria-label="${tr('关闭', 'Close')}"]`)) || panel.current).focus({ preventScroll: true })
     const trap = (e) => {
       if (e.key !== 'Tab') return
       const l = els(); if (!l.length) return
@@ -130,7 +133,7 @@ function SheetBody({ onClose, title, children }) {
           >
             <div className="mb-4 flex items-center justify-between gap-3">
               <h2 className="text-xl font-bold">{title}</h2>
-              <button onClick={onClose} aria-label="关闭" className="grid size-11 place-items-center rounded-full bg-sunken"><X size={20} weight="bold" /></button>
+              <button onClick={onClose} aria-label={tr('关闭', 'Close')} className="grid size-11 place-items-center rounded-full bg-sunken"><X size={20} weight="bold" /></button>
             </div>
             {children}
           </motion.div>
@@ -155,7 +158,7 @@ export function Field({ label, error, hint, children }) {
       <span className="text-[15px] font-semibold">{label}</span>
       {children}
       {hint && <span className="text-sm text-muted">{hint}</span>}
-      <span role={error ? 'alert' : undefined} className={`min-h-5 text-sm font-medium text-danger ${error ? '' : 'invisible'}`}>{error || '占位'}</span>
+      <span role={error ? 'alert' : undefined} className={`min-h-5 text-sm font-medium text-danger ${error ? '' : 'invisible'}`}>{error || tr('占位', 'Placeholder')}</span>
     </div>
   )
 }
@@ -164,9 +167,9 @@ export const inputCls = 'h-12 w-full rounded-xl bg-surface px-3.5 text-base text
 
 export function Stars({ value, onChange, size = 30 }) {
   return (
-    <div className="flex gap-1" role="radiogroup" aria-label="评分">
+    <div className="flex gap-1" role="radiogroup" aria-label={tr('评分', 'Rating')}>
       {[1, 2, 3, 4, 5].map((n) => (
-        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} 星`} onClick={() => onChange(n)}
+        <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={tr(`${n} 星`, `${n} ${n === 1 ? 'star' : 'stars'}`)} onClick={() => onChange(n)}
           className={`grid size-11 place-items-center rounded-full transition active:scale-90 ${n <= value ? 'text-accent' : 'text-muted'}`}>
           <Star size={size} weight={n <= value ? 'fill' : 'regular'} />
         </button>
@@ -177,21 +180,22 @@ export function Stars({ value, onChange, size = 30 }) {
 
 export const ago = (t) => {
   const m = Math.round((Date.now() - t) / 60000)
-  if (m < 1) return '刚刚'
-  if (m < 60) return `${m} 分钟前`
+  if (m < 1) return tr('刚刚', 'just now')
+  if (m < 60) return tr(`${m} 分钟前`, `${m} min ago`)
   const h = Math.round(m / 60)
-  return h < 24 ? `${h} 小时前` : `${Math.round(h / 24)} 天前`
+  return h < 24 ? tr(`${h} 小时前`, `${h} h ago`) : tr(`${Math.round(h / 24)} 天前`, `${Math.round(h / 24)} d ago`)
 }
 export const left = (t) => {
   const m = Math.round((t - Date.now()) / 60000)
-  if (m <= 0) return '已超时'
-  if (m < 60) return `${m} 分钟内`
+  if (m <= 0) return tr('已超时', 'overdue')
+  if (m < 60) return tr(`${m} 分钟内`, `within ${m} min`)
   const h = Math.floor(m / 60)
   // 一小时以上统一写「约 N 小时内」，不和「1 小时 28 分钟内」混着用；超过 8 小时（占座、讲座）写具体到几点
-  if (h < 8) return `约 ${Math.max(1, Math.round(m / 60))} 小时内`
+  if (h < 8) return tr(`约 ${Math.max(1, Math.round(m / 60))} 小时内`, `about ${Math.max(1, Math.round(m / 60))} h`)
   // 超过 8 小时的截止取整到半点，不出现「09:17」这种按当前时间推出来的分钟数
   const d = new Date(Math.round(t / 1800000) * 1800000), today = new Date()
   const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000)
+  if (EN) return `${['today', 'tomorrow', 'in 2 days'][days] ?? `in ${days} days`} before ${clock(d)}`
   return `${['今天', '明天', '后天'][days] ?? `${days} 天后`} ${clock(d)} 前`
 }
 export const clock = (t) => new Date(t).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })

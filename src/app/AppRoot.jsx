@@ -18,6 +18,8 @@ import Wallet from './Wallet'
 import TourBar from './TourBar'
 import Coach from './Coach'
 import DemoPanel from './DemoPanel'
+import LangSwitch from '../LangSwitch'
+import { EN, tr } from '../i18n'
 import CampusMap from '../landing/CampusMap'
 import { B, myRoute, detourMin, detourMeters } from '../data'
 const Receipt = pi(PhReceipt)
@@ -39,15 +41,15 @@ function RoleSwitch() {
   // 订单页切身份：页面换成另一方能做的事，回到顶上，免得主按钮躲在吸顶栏后面
   // 指引进行中不回顶部：下一步要点的按钮由指引自己（只在看不见时）滚出来，免得先上再下滚两趟
   const pick = (k) => { act('role', { role: k }); if (pathname.startsWith('/app/task/') && !state.tour.active) window.scrollTo({ top: 0, behavior: 'smooth' }) }
-  const opts = [['poster', '发单人'], ['runner', '跑腿人']]
+  const opts = [['poster', tr('发单人', 'Requester')], ['runner', tr('跑腿人', 'Runner')]]
   return (
-    <div className="relative grid grid-cols-2 rounded-full bg-sunken p-1" role="tablist" aria-label="切换角色">
+    <div className="relative grid grid-cols-2 rounded-full bg-sunken p-1" role="tablist" aria-label={tr('切换角色', 'Switch role')}>
       {/* 滑块用 CSS 位移，不跟页面布局联动：换页、滚动时不会从别处飞过来 */}
       <span aria-hidden="true" className={`absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-accent transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${state.role === 'runner' ? 'translate-x-full' : ''}`} />
       {opts.map(([k, label]) => (
         <button key={k} role="tab" aria-selected={state.role === k} onClick={() => pick(k)}
-          className={`relative z-10 h-10 whitespace-nowrap rounded-full px-3 text-[15px] font-semibold transition-colors before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] ${state.role === k ? 'text-on-accent' : 'text-muted'}`}>
-          <span className="max-[440px]:hidden">我是</span>{label}
+          className={`relative z-10 h-10 whitespace-nowrap rounded-full ${EN ? 'px-1 text-[13px] sm:px-3 sm:text-[15px]' : 'px-3 text-[15px]'} font-semibold transition-colors before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] ${state.role === k ? 'text-on-accent' : 'text-muted'}`}>
+          {!EN && <span className="max-[440px]:hidden">我是</span>}{label}
         </button>
       ))}
     </div>
@@ -100,13 +102,13 @@ function Onboarding() {
   // 先让小窗收起来（约 0.3 秒），再出导览条和圈：不然导览条一出来会把正在收起的小窗往下推一截
   const go = () => { act('onboarded'); setTimeout(() => { act('tour', { tour: { active: true, taskId: null, done: false, dismissed: false } }); act('role', { role: 'poster' }) }, 320) }
   return (
-    <Sheet open={!state.onboarded && !fromPush} onClose={() => act('onboarded')} title="第一次来？">
-      <p className="text-[17px] leading-relaxed text-muted">跟着指引走完一单，约 2 分钟。一个人轮流扮演发单人和跑腿人，屏幕上会圈出每一步该点哪里。</p>
+    <Sheet open={!state.onboarded && !fromPush} onClose={() => act('onboarded')} title={tr('第一次来？', 'First time here?')}>
+      <p className="text-[17px] leading-relaxed text-muted">{tr('跟着指引走完一单，约 2 分钟。一个人轮流扮演发单人和跑腿人，屏幕上会圈出每一步该点哪里。', 'Walk through one order in about 2 minutes. You play both the Requester and the Runner, and each step shows exactly where to tap.')}</p>
       <div className="mt-6 grid gap-2">
-        <Btn size="lg" onClick={go}>带我走一遍</Btn>
-        <Btn variant="ghost" onClick={() => act('onboarded')}>我自己逛逛</Btn>
+        <Btn size="lg" onClick={go}>{tr('带我走一遍', 'Show me around')}</Btn>
+        <Btn variant="ghost" onClick={() => act('onboarded')}>{tr('我自己逛逛', "I'll explore")}</Btn>
       </div>
-      <p className="mt-4 text-sm text-muted">以后想看，点顶栏的「新手指引」随时能重新开始。</p>
+      <p className="mt-4 text-sm text-muted">{tr('以后想看，点顶栏的「新手指引」随时能重新开始。', 'Want it later? Tap Guided tour in the top bar to start again anytime.')}</p>
     </Sheet>
   )
 }
@@ -125,16 +127,16 @@ function GuideEntry() {
   }
   const hidden = state.tour.active || !state.onboarded
   return (
-    <button onClick={start} aria-label="新手指引" tabIndex={hidden ? -1 : undefined} className={`relative inline-flex h-10 min-w-11 shrink-0 items-center justify-center gap-1 rounded-full bg-sunken px-3 before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] text-[14px] font-semibold text-ink active:scale-[0.97] ${hidden ? 'invisible' : ''}`}>
-      <Compass size={18} weight="bold" className="text-accent" /><span className={EMBED ? '' : 'max-xl:sr-only'}>新手指引</span>
+    <button onClick={start} aria-label={tr('新手指引', 'Guided tour')} tabIndex={hidden ? -1 : undefined} className={`relative inline-flex h-10 min-w-11 shrink-0 items-center justify-center gap-1 rounded-full bg-sunken px-3 before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] text-[14px] font-semibold text-ink active:scale-[0.97] ${hidden ? 'invisible' : ''}`}>
+      <Compass size={18} weight="bold" className="text-accent" /><span className={EMBED ? '' : 'max-xl:sr-only'}>{tr('新手指引', 'Guided tour')}</span>
     </button>
   )
 }
 const tabs = [
-  ['/app', '大厅', 'nav-hall', true],
-  ['/app/publish', '发布', 'nav-publish'],
-  ['/app/orders', '订单', 'nav-orders'],
-  ['/app/me', '我的', 'nav-me'],
+  ['/app', tr('大厅', 'Order board'), 'nav-hall', true],
+  ['/app/publish', tr('发布', 'Post'), 'nav-publish'],
+  ['/app/orders', tr('订单', 'Orders'), 'nav-orders'],
+  ['/app/me', tr('我的', 'Me'), 'nav-me'],
 ]
 
 // 页面转场：往里走（详情、钱包）从右边推进来，往回走从左边；底部标签之间按左右顺序滑
@@ -179,7 +181,7 @@ function RightHint() {
   const { state } = useStore()
   const reduce = useReducedMotion()
   const r = myRoute()
-  const name = (id) => B[id]?.name.replace(/（.*?）/, '')
+  const name = (id) => B[id]?.name.replace(/（.*?）|\s*\(.*?\)/, '')
   const hits = state.tasks.filter((t) => t.status === 'open' && t.deadline > Date.now() && t.posterId !== 'runner' && detourMin(r.from, r.to, t) <= 5).map((t) => ({ ...t, dm: detourMeters(r.from, r.to, t) }))
   const done = state.tasks.filter((t) => t.status === 'completed' && (state.role === 'runner' ? t.runnerId === 'runner' : t.posterId === 'poster')).length
   const me = state.accounts[state.role]
@@ -187,13 +189,13 @@ function RightHint() {
     <div className="rounded-[24px] bg-accent-soft p-2 pb-4">
       <CampusMap R={r} hits={hits} reduce={reduce} pills={false} walker={false} compact legend />
       <div className="px-3 pt-3">
-        <p className="text-[16px] font-bold">我常走的路 · {name(r.from)} → {name(r.to)}</p>
-        <p className="mt-1 text-[14px] text-muted">此刻这条路上有 {hits.length} 单顺路，开了下课提醒就会推给你。</p>
+        <p className="text-[16px] font-bold">{tr('我常走的路', 'My usual route')} · {name(r.from)} → {name(r.to)}</p>
+        <p className="mt-1 text-[14px] text-muted">{EN ? `${hits.length} ${hits.length === 1 ? 'order is' : 'orders are'} on your way right now. Turn on after-class reminders and we'll send them to you.` : <>此刻这条路上有 {hits.length} 单顺路，开了下课提醒就会推给你。</>}</p>
         <dl className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-surface px-3 py-2.5"><dt className="text-[14px] text-muted">{state.role === 'runner' ? '顺路完成' : '发出的单走完'}</dt><dd className="tnum text-[22px] font-bold">{done} 单</dd></div>
-          <div className="rounded-xl bg-surface px-3 py-2.5"><dt className="text-[14px] text-muted">我的信用</dt><dd className="tnum text-[22px] font-bold">{me.credit ?? '未认证'}</dd></div>
+          <div className="rounded-xl bg-surface px-3 py-2.5"><dt className="text-[14px] text-muted">{state.role === 'runner' ? tr('顺路完成', 'Done on the way') : tr('发出的单走完', 'Orders completed')}</dt><dd className="tnum text-[22px] font-bold">{EN ? `${done} ${done === 1 ? 'order' : 'orders'}` : <>{done} 单</>}</dd></div>
+          <div className="rounded-xl bg-surface px-3 py-2.5"><dt className="text-[14px] text-muted">{tr('我的信用', 'My credit')}</dt><dd className="tnum text-[22px] font-bold">{me.credit ?? tr('未认证', 'Not verified')}</dd></div>
         </dl>
-        <Link to={state.role === 'runner' ? '/app' : '/app/publish'} className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-on-accent active:scale-[0.97]">{state.role === 'runner' ? '去大厅接一单' : '再发一单'}</Link>
+        <Link to={state.role === 'runner' ? '/app' : '/app/publish'} className="mt-3 inline-flex h-11 items-center gap-1.5 rounded-full bg-accent px-4 text-[15px] font-semibold text-on-accent active:scale-[0.97]">{state.role === 'runner' ? tr('去大厅接一单', 'Take an order') : tr('再发一单', 'Post another')}</Link>
       </div>
     </div>
   )
@@ -217,15 +219,15 @@ function DeskShell({ sub, openTask }) {
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-6">
           <HomeLink className="-m-1 flex shrink-0 items-center gap-2 rounded-xl p-1 text-lg font-bold tracking-tight">
-            <img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt="顺路侠标志：背着书包、夹着包裹奔跑的小人" className="size-9" />
-            顺路侠
+            <img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt={tr('顺路侠标志：背着书包、夹着包裹奔跑的小人', 'Shunluxia logo: a little figure running with a backpack and a parcel')} className="size-9" />
+            {tr('顺路侠', 'Shunluxia')}
           </HomeLink>
-          <div className="flex items-center gap-2"><GuideEntry /><RoleSwitch /><ViewToggle inner /></div>
+          <div className="flex items-center gap-2"><LangSwitch /><GuideEntry /><RoleSwitch /><ViewToggle inner /></div>
         </div>
         <TourBar wide />
       </header>
       <main className="mx-auto grid max-w-[1440px] grid-cols-[220px_minmax(0,1fr)_420px] 2xl:grid-cols-[260px_minmax(0,1fr)_480px] gap-6 px-6 pt-5">
-        <nav className={`sticky ${top} self-start`} aria-label="主导航">
+        <nav className={`sticky ${top} self-start`} aria-label={tr('主导航', 'Main navigation')}>
           <div className="grid gap-1">
             {tabs.map(([to, label, img, end]) => (
               <NavLink key={to} to={to} end={end} className={({ isActive: a0 }) => { const on = (taskOpen ? listPath : sub) ? to === (taskOpen ? listPath : sub) : a0; return `flex h-12 items-center gap-2.5 rounded-xl px-3 text-[15px] font-semibold transition-colors ${on ? 'bg-accent-soft text-accent' : 'text-muted hover:bg-sunken'}` }}>
@@ -236,7 +238,7 @@ function DeskShell({ sub, openTask }) {
           {/* 演示面板放在导航下面：右栏留给地图和订单详情 */}
           <div className="-mx-1.5 mt-[18px] overflow-y-auto overscroll-contain p-1.5" style={{ maxHeight: `calc(100dvh - ${state.tour.active ? 148 : 96}px - 230px + 6px)` }}><DemoPanel /></div>
         </nav>
-        <section aria-label="列表" className="min-w-0 pb-6" data-tour-root={taskOpen ? undefined : ''}>
+        <section aria-label={tr('列表', 'List')} className="min-w-0 pb-6" data-tour-root={taskOpen ? undefined : ''}>
           {taskOpen ? (
             // 右边开着一单：中间的列表自己滚，不跟着详情走，随时点另一单
             <div className={`sticky ${topIn} -m-1.5 overflow-y-auto overscroll-contain p-1.5`} style={{ maxHeight: `calc(100dvh - ${state.tour.active ? 148 : 96}px + 12px)` }}>
@@ -246,7 +248,7 @@ function DeskShell({ sub, openTask }) {
             <div key={pathname} className={reduce ? '' : 'page-in'} style={{ '--dx': '8px' }}><Routes>{LIST_ROUTES}</Routes></div>
           )}
         </section>
-        <aside aria-label={taskOpen ? '订单详情' : '演示面板'} className="min-w-0 pb-6" data-tour-root={taskOpen ? '' : undefined}>
+        <aside aria-label={taskOpen ? tr('订单详情', 'Order details') : tr('演示面板', 'Demo panel')} className="min-w-0 pb-6" data-tour-root={taskOpen ? '' : undefined}>
           {taskOpen ? (
             <div key={pathname} className={reduce ? '' : 'page-in'} style={{ '--dx': '12px' }}>
               <Routes><Route path="task/:id" element={<TaskDetail />} /></Routes>
@@ -288,12 +290,12 @@ function Shell() {
   return (
     <div className="min-h-[100dvh] bg-bg">
       <header className="sticky top-0 z-30 border-b border-line bg-bg/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-xl items-center justify-between gap-3 px-4 xl:max-w-[66rem]">
+        <div className={`mx-auto flex h-16 max-w-xl items-center justify-between ${EN ? 'gap-2 sm:gap-3' : 'gap-3'} px-4 xl:max-w-[66rem]`}>
           <HomeLink className="-m-1 flex shrink-0 items-center gap-2 rounded-xl p-1 text-lg font-bold tracking-tight">
-            <img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt="顺路侠标志：背着书包、夹着包裹奔跑的小人" className="size-9" />
-            <span className="max-[439px]:hidden">顺路侠</span>
+            <img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt={tr('顺路侠标志：背着书包、夹着包裹奔跑的小人', 'Shunluxia logo: a little figure running with a backpack and a parcel')} className="size-9" />
+            <span className="max-[439px]:hidden">{tr('顺路侠', 'Shunluxia')}</span>
           </HomeLink>
-          <div className="flex items-center gap-2"><GuideEntry /><RoleSwitch /><ViewToggle inner /></div>
+          <div className={`flex items-center ${EN ? 'gap-1.5 sm:gap-2' : 'gap-2'}`}><GuideEntry /><RoleSwitch /><ViewToggle inner /></div>
         </div>
         <TourBar />
       </header>
@@ -313,7 +315,7 @@ function Shell() {
         </Routes>
         </div>
       </main>
-      <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur xl:inset-x-auto xl:bottom-auto xl:left-[calc(50%-33rem)] ${state.tour.active ? 'xl:top-[132px]' : 'xl:top-20'} xl:w-36 xl:border-0 xl:bg-transparent xl:backdrop-blur-none`} aria-label="主导航">
+      <nav className={`fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur xl:inset-x-auto xl:bottom-auto xl:left-[calc(50%-33rem)] ${state.tour.active ? 'xl:top-[132px]' : 'xl:top-20'} xl:w-36 xl:border-0 xl:bg-transparent xl:backdrop-blur-none`} aria-label={tr('主导航', 'Main navigation')}>
         <div className="mx-auto grid max-w-xl grid-cols-4 pb-[env(safe-area-inset-bottom)] xl:grid-cols-1 xl:gap-1 xl:pb-0">
           {tabs.map(([to, label, img, end]) => (
             <NavLink key={to} to={to} end={end} className={({ isActive: a0 }) => { const isActive = sub ? to === sub : a0; return `relative flex h-16 flex-col items-center justify-center gap-0.5 text-[13px] font-semibold transition-colors xl:h-12 xl:flex-row xl:justify-start xl:gap-2.5 xl:rounded-xl xl:px-3 xl:text-[15px] ${isActive ? 'text-accent xl:bg-accent-soft' : 'text-muted xl:hover:bg-sunken'}` }}>

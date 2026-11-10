@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import '@fontsource-variable/geist'
 import './index.css'
-import './i18n'
+import { tr } from './i18n'
 import Landing from './landing/Landing.jsx'
 // 部署后旧版本的分包文件会被删掉：页面若停在旧版本，按需加载原型会 404。
 // 这时整页刷新一次拿到新版本；用 sessionStorage 防止反复刷新。
@@ -23,9 +23,9 @@ const AppRoot = lazy(() =>
 // 慢网时原型分包还没到：放一个和顶栏、列表同形状的骨架，不留整屏空白
 function AppLoading() {
   return (
-    <div className="min-h-[100dvh] bg-bg" aria-label="加载中" role="status">
+    <div className="min-h-[100dvh] bg-bg" aria-label={tr('加载中', 'Loading')} role="status">
       <div className="flex h-16 items-center justify-between border-b border-line px-4">
-        <span className="flex items-center gap-2 text-lg font-bold"><img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt="" className="size-9" />顺路侠</span>
+        <span className="flex items-center gap-2 text-lg font-bold"><img src={`${import.meta.env.BASE_URL}brand/logo-v2.png`} width={36} height={36} alt="" className="size-9" />{tr('顺路侠', 'Shunluxia')}</span>
         <span className="h-10 w-36 animate-pulse rounded-full bg-sunken motion-reduce:animate-none" />
       </div>
       <div className="mx-auto max-w-xl space-y-3 p-4">

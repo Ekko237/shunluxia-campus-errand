@@ -1,11 +1,16 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence, animate, useInView } from 'motion/react'
 import { MAP_W, MAP_H, PLACES, routePath } from '../campusMap'
+import { EN, tr } from '../i18n'
 
 const icon = (name) => `${import.meta.env.BASE_URL}icons/${name}.webp`
 // 手机上名牌放在点旁边时用的更短的名字
-const TINY = { market: '超市', canteen1: '一食', canteen2: '二食', hall: '报告厅', cainiao: '驿站', lib: '图书馆', gate: '北门', jd: '京东', sf: '顺丰', gym: '体育馆', yan: '研究生楼' }
-export const SHORT = { cainiao: '菜鸟驿站', sf: '顺丰点', jd: '京东柜', canteen1: '一食堂', canteen2: '二食堂', market: '教育超市', gate: '北门', lib: '图书馆', jiao1: '一教', hall: '学术报告厅', gym: '体育馆', zhu3: '竹园', mei5: '梅园', tao2: '桃园', lan1: '兰园', yan: '研究生公寓' }
+const TINY = EN
+  ? { market: 'Store', canteen1: 'Dining 1', canteen2: 'Dining 2', hall: 'Hall', cainiao: 'Station', lib: 'Library', gate: 'N. gate', jd: 'JD', sf: 'SF', gym: 'Gym', yan: 'Grad dorm' }
+  : { market: '超市', canteen1: '一食', canteen2: '二食', hall: '报告厅', cainiao: '驿站', lib: '图书馆', gate: '北门', jd: '京东', sf: '顺丰', gym: '体育馆', yan: '研究生楼' }
+export const SHORT = EN
+  ? { cainiao: 'Parcel station', sf: 'SF Express', jd: 'JD locker', canteen1: 'Dining hall 1', canteen2: 'Dining hall 2', market: 'Campus store', gate: 'North gate', lib: 'Library', jiao1: 'Teaching Bldg 1', hall: 'Lecture hall', gym: 'Gym', zhu3: 'Bamboo Court', mei5: 'Plum Court', tao2: 'Peach Court', lan1: 'Orchid Court', yan: 'Grad housing' }
+  : { cainiao: '菜鸟驿站', sf: '顺丰点', jd: '京东柜', canteen1: '一食堂', canteen2: '二食堂', market: '教育超市', gate: '北门', lib: '图书馆', jiao1: '一教', hall: '学术报告厅', gym: '体育馆', zhu3: '竹园', mei5: '梅园', tao2: '桃园', lan1: '兰园', yan: '研究生公寓' }
 
 // 地图上标点的位置：小亭子、校门标在正中，其他楼标在楼里取件的地方（从门口拐进去那段虚线的尽头）
 // 楼里取件的位置：从门口往楼里走 70，离楼边至少 20
@@ -174,7 +179,7 @@ export default function CampusMap({ R, hits, reduce, pills = true, walker = true
   return (
     <div>
     <div ref={box} style={{ aspectRatio: `${V.VW} / ${V.VH}` }} className="relative isolate w-full overflow-hidden rounded-[20px] bg-surface ring-1 ring-line md:rounded-[28px]"
-      role="img" aria-label={`示意地图：从${SHORT[R.from]}到${SHORT[R.to]}，沿路有 ${hits.length} 个顺路的单`}>
+      role="img" aria-label={tr(`示意地图：从${SHORT[R.from]}到${SHORT[R.to]}，沿路有 ${hits.length} 个顺路的单`, `Map: ${SHORT[R.from]} to ${SHORT[R.to]}, ${hits.length} ${hits.length === 1 ? 'order' : 'orders'} on the way`)}>
       <svg viewBox={`${V.X0} ${V.Y0} ${V.VW} ${V.VH}`} className="absolute inset-0 size-full" aria-hidden="true">
         <image href={`${import.meta.env.BASE_URL}images/campus-map-v3.webp`} x="0" y="0" width={MAP_W} height={MAP_H} />
         {/* 拐进楼里取件的那一小段：从路边进门、走进楼里，多走的分钟数大多花在这里 */}
@@ -208,7 +213,7 @@ export default function CampusMap({ R, hits, reduce, pills = true, walker = true
       {marks.filter(({ t }) => t.from !== t.to && PLACES[t.to] && !ends.includes(t.to)).map(({ t }) => (
         // 送达点也写上是哪儿，不然读的人看不出绿线最后拐去了哪
         <span key={`d${t.id}`} data-ob="" aria-hidden="true" className="absolute z-10 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface ring-[3px] ring-accent md:size-4" style={pct(PLACES[t.to].door)}>
-          <span data-ob="" data-drop={t.id} className={`absolute whitespace-nowrap rounded-full bg-surface px-1.5 ${dropCls(t.id)} text-[12px] font-bold leading-5 text-accent shadow-sm ring-1 ring-accent/40 md:px-2 md:text-[13px]`}>{TINY[t.to] || SHORT[t.to]} 送达</span>
+          <span data-ob="" data-drop={t.id} className={`absolute whitespace-nowrap rounded-full bg-surface px-1.5 ${dropCls(t.id)} text-[12px] font-bold leading-5 text-accent shadow-sm ring-1 ring-accent/40 md:px-2 md:text-[13px]`}>{EN ? `Drop: ${TINY[t.to] || SHORT[t.to]}` : `${TINY[t.to] || SHORT[t.to]} 送达`}</span>
         </span>
       ))}
       {marks.map(({ t }) => (
@@ -219,7 +224,7 @@ export default function CampusMap({ R, hits, reduce, pills = true, walker = true
         <span key={id} className="absolute z-20" style={pct(id === R.from ? mine[0] : mine[mine.length - 1])}>
           {/* 收尾卡小人停在终点时，终点小黑点会正好盖在头像脸上：这时只留名牌 */}
           {!(park && id === R.to && p >= 0.97) && <span data-ob="" data-own={id} className="absolute left-0 top-0 block size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink ring-[3px] ring-surface md:size-4" />}
-          <span data-ob="" data-end={id} data-own={id} className={`absolute whitespace-nowrap rounded-full bg-ink px-2 py-0.5 text-[13px] font-semibold text-bg shadow-sm md:px-2.5 md:text-[13px] ${placeCls(id)}`}>{side(id) ? <><span className="max-md:hidden">{SHORT[id]} </span><span className="md:hidden">{TINY[id] || SHORT[id]} </span></> : `${SHORT[id]} `}{id === R.from ? '出发' : '到达'}</span>
+          <span data-ob="" data-end={id} data-own={id} className={`absolute whitespace-nowrap rounded-full bg-ink px-2 py-0.5 text-[13px] font-semibold text-bg shadow-sm md:px-2.5 md:text-[13px] ${placeCls(id)}`}>{EN ? <>{id === R.from ? 'From ' : 'To '}{side(id) ? <><span className="max-md:hidden">{SHORT[id]}</span><span className="md:hidden">{TINY[id] || SHORT[id]}</span></> : SHORT[id]}</> : <>{side(id) ? <><span className="max-md:hidden">{SHORT[id]} </span><span className="md:hidden">{TINY[id] || SHORT[id]} </span></> : `${SHORT[id]} `}{id === R.from ? '出发' : '到达'}</>}</span>
         </span>
       ))}
       {!endsOnly && marks.filter(({ t }) => !ends.includes(t.from)).map(({ t }) => (
@@ -235,7 +240,7 @@ export default function CampusMap({ R, hits, reduce, pills = true, walker = true
           <span key={`${R.from}${R.to}${t.id}`} className="absolute z-30 hidden md:block" style={pct(markAt(t.from))}>
             <motion.span initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 420, damping: 24 }}
               className={`tnum absolute left-0 -translate-x-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-1 text-sm font-bold text-on-accent shadow-[0_8px_18px_-8px_rgba(11,122,85,0.7)] ${(force['p' + t.id] ? force['p' + t.id] === 'up' : pillUp(t)) ? 'bottom-10' : 'top-10'}`} data-pill={t.id} data-up={(force['p' + t.id] ? force['p' + t.id] === 'up' : pillUp(t)) ? '1' : ''}>
-              ¥{t.reward} · {t.dm ? `+${t.m ?? Math.max(1, Math.ceil(t.dm / 80))} 分钟` : '就在路上'}
+              ¥{t.reward} · {t.dm ? tr(`+${t.m ?? Math.max(1, Math.ceil(t.dm / 80))} 分钟`, `+${t.m ?? Math.max(1, Math.ceil(t.dm / 80))} min`) : tr('就在路上', 'On your route')}
             </motion.span>
           </span>
         ))}
@@ -249,12 +254,12 @@ export default function CampusMap({ R, hits, reduce, pills = true, walker = true
     </div>
     {legend && (
       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[14px] text-ink/80">
-        <span className="inline-flex items-center gap-1.5"><i className="h-1 w-5 rounded-full bg-ink/80" />你正要走的路</span>
+        <span className="inline-flex items-center gap-1.5"><i className="h-1 w-5 rounded-full bg-ink/80" />{tr('你正要走的路', 'Your route')}</span>
         {/* 只有真有「取件到送达」那一段时才写这条图例（占座这类就地完成的单没有这段） */}
-        {hits.some((t) => t.from !== t.to) && <span className="inline-flex items-center gap-1.5"><i className="h-1.5 w-5 rounded-full bg-accent ring-2 ring-surface" />顺手捎的那段（取件到送达）</span>}
-        <span className="inline-flex items-center gap-1.5 max-md:hidden"><i className="w-5 border-t-[3px] border-dotted border-accent" />拐进楼里取件（多走的路）</span>
-        {hits.some((t) => t.from !== t.to && PLACES[t.to] && t.to !== R.from && t.to !== R.to) && <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-surface ring-2 ring-accent" />送达点</span>}
-        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-accent" /><span>取件点，按路上先后编号，走到就变绿，共 {hits.length} 单</span></span>
+        {hits.some((t) => t.from !== t.to) && <span className="inline-flex items-center gap-1.5"><i className="h-1.5 w-5 rounded-full bg-accent ring-2 ring-surface" />{tr('顺手捎的那段（取件到送达）', 'Carried on the way (pickup to drop-off)')}</span>}
+        <span className="inline-flex items-center gap-1.5 max-md:hidden"><i className="w-5 border-t-[3px] border-dotted border-accent" />{tr('拐进楼里取件（多走的路）', 'Into the building for pickup (extra walk)')}</span>
+        {hits.some((t) => t.from !== t.to && PLACES[t.to] && t.to !== R.from && t.to !== R.to) && <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-surface ring-2 ring-accent" />{tr('送达点', 'Drop-off')}</span>}
+        <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-full bg-accent" /><span>{tr(`取件点，按路上先后编号，走到就变绿，共 ${hits.length} 单`, `Pickups, numbered in route order, turn green as you pass. ${hits.length} ${hits.length === 1 ? 'order' : 'orders'}`)}</span></span>
       </p>
     )}
     </div>

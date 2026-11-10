@@ -1,4 +1,5 @@
 import { routePath, PLACES } from '../campusMap'
+import { EN, tr } from '../i18n'
 
 // 今日顺路卡：走完一单后存下来的一张 1080×1350 图。上面是校园地图上这一单走的路（阿远自己的路是黑点线，捎快递那段是亮绿实线），
 // 下面是信用的大数字和这一单的钱，可以发给同学看。全部在浏览器里用 canvas 画，不上传任何东西
@@ -8,17 +9,23 @@ const SANS = '"Geist Variable", "PingFang SC", "Noto Sans SC", "Microsoft YaHei"
 const DISPLAY = '"Smiley Sans Oblique", "PingFang SC", sans-serif'
 
 function load(src) {
-  return new Promise((ok, fail) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => fail(new Error(`图片没加载出来：${src}`)); im.src = src })
+  return new Promise((ok, fail) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => fail(new Error(tr(`图片没加载出来：${src}`, `Image failed to load: ${src}`))); im.src = src })
 }
 function rounded(ctx, x, y, w, h, r) {
   ctx.beginPath()
   ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r)
   ctx.closePath()
 }
+// 英文比中文长：量一下宽度，超出 maxW 就按比例把字号缩小，保证不出画布
+function fitFont(ctx, text, weight, size, maxW) {
+  ctx.font = `${weight} ${size}px ${SANS}`
+  const w = ctx.measureText(text).width
+  if (w > maxW) ctx.font = `${weight} ${Math.floor(size * maxW / w)}px ${SANS}`
+}
 
 // route：阿远常走的路 { from, to }；task：这一单；credit：{ from, to, delta }；names：楼名
 export async function routeCardBlob({ route, task, credit, fromName, toName, who }) {
-  await Promise.all([document.fonts.load(`220px ${DISPLAY}`, `+${credit.delta}${credit.from}${credit.to}→顺路卡`), document.fonts.ready])
+  await Promise.all([document.fonts.load(`220px ${DISPLAY}`, `+${credit.delta}${credit.from}${credit.to}→顺路卡`), ...(EN ? [500, 600, 700].map((w) => document.fonts.load(`${w} 40px ${SANS}`, 'Shunluxia')) : []), document.fonts.ready])
   const [map, runner, logo] = await Promise.all([load(`${BASE}images/campus-map-v3.webp`), load(`${BASE}brand/runner-v1.webp`), load(`${BASE}brand/logo-v2.png`)])
   const cv = document.createElement('canvas')
   cv.width = W; cv.height = H
@@ -31,7 +38,8 @@ export async function routeCardBlob({ route, task, credit, fromName, toName, who
   ctx.fillStyle = '#f6fbf8'
   ctx.font = `700 40px ${SANS}`
   ctx.textBaseline = 'middle'
-  ctx.fillText('顺路侠 · 今日顺路卡', 164, 101)
+  if (EN) fitFont(ctx, 'Shunluxia · Today\'s route card', 700, 40, W - 72 - 164)
+  ctx.fillText(tr('顺路侠 · 今日顺路卡', 'Shunluxia · Today\'s route card'), 164, 101)
 
   // 地图：把阿远的路和捎快递那段都框进来，按画框比例裁一块
   const mine = routePath(route.from, route.to).pts
@@ -77,17 +85,22 @@ export async function routeCardBlob({ route, task, credit, fromName, toName, who
   const bigW = ctx.measureText(big).width
   ctx.fillStyle = '#f6fbf8'
   ctx.font = `700 46px ${SANS}`
-  ctx.fillText(`${who}的信用`, 64 + bigW + 36, 940)
+  if (EN) fitFont(ctx, `${who}'s credit`, 700, 46, W - 72 - (64 + bigW + 36))
+  ctx.fillText(tr(`${who}的信用`, `${who}'s credit`), 64 + bigW + 36, 940)
   ctx.font = `700 64px ${SANS}`
   ctx.fillText(`${credit.from} → ${credit.to}`, 64 + bigW + 36, 1020)
 
   // 这一单：从哪到哪、赏金、日期
   ctx.fillStyle = 'rgba(246,251,248,0.92)'
   ctx.font = `600 38px ${SANS}`
-  ctx.fillText(`${fromName} → ${toName} · 顺手捎上 ¥${task.reward}`, 72, 1130)
+  const leg = tr(`${fromName} → ${toName} · 顺手捎上 ¥${task.reward}`, `${fromName} → ${toName} · ¥${task.reward} on the way`)
+  if (EN) fitFont(ctx, leg, 600, 38, W - 72 * 2)
+  ctx.fillText(leg, 72, 1130)
   ctx.fillStyle = 'rgba(246,251,248,0.75)'
   ctx.font = `500 32px ${SANS}`
   const d = new Date()
-  ctx.fillText(`${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} · 本来就要经过，顺手捎一下`, 72, 1250)
-  return new Promise((ok, fail) => cv.toBlob((b) => (b ? ok(b) : fail(new Error('顺路卡没画出来'))), 'image/png'))
+  const foot = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} · ${tr('本来就要经过，顺手捎一下', 'You\'re walking past anyway. Grab it on the way.')}`
+  if (EN) fitFont(ctx, foot, 500, 32, W - 72 * 2)
+  ctx.fillText(foot, 72, 1250)
+  return new Promise((ok, fail) => cv.toBlob((b) => (b ? ok(b) : fail(new Error(tr('顺路卡没画出来', 'Route card failed to render')))), 'image/png'))
 }

@@ -1,13 +1,14 @@
 import { motion, useReducedMotion } from 'motion/react'
 import { routePath, PLACES } from '../campusMap'
+import { tr } from '../i18n'
 
 // 不止取快递：同一张校园地图上裁两块，各画一条顺路的路线；一大一小两张，和首屏是同一个世界
 const BASE = import.meta.env.BASE_URL
 const ease = [0.16, 1, 0.3, 1]
 
 const MAPS = {
-  seat: { from: 'zhu3', to: 'lib', box: [110, 150, 640, 470], label: ['竹园', '图书馆'], dy: [-46, 46], runner: 0.55, sprite: 'runner-free-v1' },
-  handoff: { from: 'gate', to: 'tao2', box: [170, 30, 700, 640], label: ['北门', '桃园 2 号楼'], dy: [52, -64], runner: 0.62, sprite: 'runner-v1' },
+  seat: { from: 'zhu3', to: 'lib', box: [110, 150, 640, 470], label: [tr('竹园', 'Bamboo Court'), tr('图书馆', 'Library')], dy: [-46, 46], runner: 0.55, sprite: 'runner-free-v1' },
+  handoff: { from: 'gate', to: 'tao2', box: [170, 30, 700, 640], label: [tr('北门', 'North Gate'), tr('桃园 2 号楼', 'Peach Court Bldg 2')], dy: [52, -64], runner: 0.62, sprite: 'runner-v1' },
 }
 
 function along(pts, f) {
@@ -67,7 +68,7 @@ function Band({ box, runnerH, labels }) {
         <motion.path d={d(need)} fill="none" stroke="var(--accent)" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"
           initial={reduce ? false : { pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true, amount: 0.6 }} transition={{ duration: 1.4, ease }} />
       </svg>
-      {labels && [['一教', [PLACES.jiao1.door[0] - 50, PLACES.jiao1.door[1]], -44], ['菜鸟驿站', PLACES.cainiao.door, 66], ['梅园', PLACES.mei5.door, 66]].map(([l, p, dy]) => (
+      {labels && [[tr('一教', 'Teaching Bldg 1'), [PLACES.jiao1.door[0] - 50, PLACES.jiao1.door[1]], -44], [tr('菜鸟驿站', 'Parcel station'), PLACES.cainiao.door, 66], [tr('梅园', 'Plum Court'), PLACES.mei5.door, 66]].map(([l, p, dy]) => (
         <span key={l} className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-surface px-2.5 py-1 text-[14px] font-semibold shadow-sm ring-1 ring-line" style={pct([p[0], p[1] + dy])}>{l}</span>
       ))}
       <img src={`${BASE}brand/runner-v1.webp`} width={169} height={240} alt="" className={`absolute ${runnerH} w-auto max-w-none -translate-x-1/2 -translate-y-[90%] drop-shadow-[0_8px_8px_rgba(17,40,30,0.25)]`} style={pct(r)} />

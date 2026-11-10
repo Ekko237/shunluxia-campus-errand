@@ -3,6 +3,7 @@ import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform, use
 import { ArrowDown } from '@phosphor-icons/react'
 import { routePath, PLACES } from '../campusMap'
 import { CH, STATUS, ESCROW, CODE, RUNNER, POSTER } from './Story'
+import { EN, tr } from '../i18n'
 
 // 一镜到底：首屏和一单的六步是同一张校园地图的一次连续镜头。地图铺满整屏，黏土小人阿远是镜头里唯一的演员；
 // 往下滚，镜头推近、横移、拉远，跟着他从一教走到梅园。每一章的字写在画面下沿一条纸色字幕卡上，不压路线和人。
@@ -75,16 +76,22 @@ function useBox(ref) {
 // 逐字由模糊变清晰地出现；标点跟着前一个字，不会单独落到行首
 const PUNCT = '，。、；：？！」』）'
 function units(text) {
+  // 英文按词出现：逐个字母做成 inline-block 会让单词从中间断行
+  if (EN) return text.split(/\s+/).filter(Boolean)
   const out = []
   for (const ch of text) { if (PUNCT.includes(ch) && out.length) out[out.length - 1] += ch; else out.push(ch) }
   return out
 }
 function Chars({ text, delay = 0, step = 0.035, dur = 0.55, blur = 10, reduce }) {
   if (reduce) return text
-  return units(text).map((u, i) => (
+  const one = (u, i) => (
     <motion.span key={i} className="inline-block" initial={{ opacity: 0, filter: `blur(${blur}px)`, y: '0.14em' }} animate={{ opacity: 1, filter: 'blur(0px)', y: 0 }}
       transition={{ duration: dur, delay: delay + i * step, ease }}>{u}</motion.span>
-  ))
+  )
+  if (!EN) return units(text).map(one)
+  // 英文：词之间的空格留成普通文字，才有词距、才能在词间换行
+  let n = -1
+  return text.split(/(\s+)/).map((w, j) => (!w ? null : /^\s+$/.test(w) ? <span key={`s${j}`}> </span> : one(w, ++n)))
 }
 
 // 关键词下面的点线小路：读到这一章时从左画到右，末端一个点
@@ -116,7 +123,8 @@ function Drop({ on, reduce, dark, delay = 0 }) {
 // 逗号前后各是一个不断开的词组，只在逗号后换行，不会把「下课」拆成两行
 const TS = 0.02
 function Title({ c, reduce, dark, className = '' }) {
-  const cut = c.t.indexOf('，') + 1
+  // 英文按词自然换行，不分段、不加 nowrap
+  const cut = EN ? 0 : c.t.indexOf('，') + 1
   const parts = cut ? [c.t.slice(0, cut), c.t.slice(cut)] : [c.t]
   const ch = (text, delay = 0) => <Chars text={text} delay={delay} step={TS} dur={0.34} blur={6} reduce={reduce} />
   let n = 0
@@ -128,7 +136,7 @@ function Title({ c, reduce, dark, className = '' }) {
         const i = c.hl ? part.indexOf(c.hl) : -1
         const head = i < 0 ? part : part.slice(0, i)
         return (
-          <span key={j} className="whitespace-nowrap">
+          <span key={j} className={EN ? '' : 'whitespace-nowrap'}>
             {ch(head, at * TS)}
             {i >= 0 && <><KeyLine on reduce={reduce} dark={dark}>{ch(c.hl, (at + units(head).length) * TS)}</KeyLine>{ch(part.slice(i + c.hl.length), (at + units(head).length + units(c.hl).length) * TS)}</>}
             {j === parts.length - 1 && <Drop on reduce={reduce} dark={dark} delay={units(c.t).length * TS + 0.2} />}
@@ -140,7 +148,7 @@ function Title({ c, reduce, dark, className = '' }) {
 }
 
 // 凭证：这一单的托管、取件码和两个人的信用写在一张两侧带缺口的小票上；这一章变了的那一行亮起来，数字翻过去
-const ROWS = [['赏金托管', ESCROW], ['取件码', CODE], ['阿远信用', RUNNER], ['小满信用', POSTER]]
+const ROWS = [[tr('赏金托管', 'Reward escrow'), ESCROW], [tr('取件码', 'Pickup code'), CODE], [tr('阿远信用', "Yuan's credit"), RUNNER], [tr('小满信用', "Xiaoman's credit"), POSTER]]
 function Ticket({ k, small, notch = 'var(--surface)' }) {
   const reduce = useReducedMotion()
   const anyHot = k > 0 && ROWS.some(([, arr]) => arr[k] !== arr[k - 1])
@@ -151,7 +159,7 @@ function Ticket({ k, small, notch = 'var(--surface)' }) {
           <span aria-hidden="true" className="absolute -left-2 top-[46px] size-4 rounded-full ring-1 ring-line" style={{ background: notch }} />
           <span aria-hidden="true" className="absolute -right-2 top-[46px] size-4 rounded-full ring-1 ring-line" style={{ background: notch }} />
           <div className="flex items-center justify-between gap-2 border-b border-dashed border-line pb-2">
-            <span className="text-[14px] font-semibold text-muted">凭证 · 驿站 → 梅园</span>
+            <span className="text-[14px] font-semibold text-muted">{tr('凭证 · 驿站 → 梅园', 'Receipt · Station → Plum Court')}</span>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.span key={STATUS[k]} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
                 className="whitespace-nowrap rounded-full bg-accent px-2 py-0.5 text-[14px] font-bold text-on-accent">{STATUS[k]}</motion.span>
@@ -187,12 +195,13 @@ const keepTail = (t, n = 4) => { const a = [...t]; return a.length <= n ? t : a.
 // 这些词也不许从中间断开（「取件｜码」「接单之｜前」）：字和字之间塞同一个不换行的连接符
 const WORDS = ['取件码', '送达码', '宿舍号', '接单之前', '虚拟号', '信用分', '菜鸟驿站', '6-2-3108']
 const glue = (t) => WORDS.reduce((x, w) => x.split(w).join([...w].join('\u2060')), t)
-const tidy = (t) => glue(keepTail(t))
+// 英文没有这类断行问题，原样输出
+const tidy = (t) => (EN ? t : glue(keepTail(t)))
 
 // 六步走到第几步：这一步拉长，走过的绿，没走的灰
 function Steps({ k, dark, className = '' }) {
   return (
-    <span role="img" aria-label={`第 ${k} 步，共 6 步`} className={`flex shrink-0 items-center gap-1 ${className}`}>
+    <span role="img" aria-label={tr(`第 ${k} 步，共 6 步`, `Step ${k} of 6`)} className={`flex shrink-0 items-center gap-1 ${className}`}>
       {[1, 2, 3, 4, 5, 6].map((i) => <span key={i} className={`h-1.5 rounded-full ${i === k ? 'w-6' : 'w-2'} ${i <= k ? (dark ? 'bg-accent-glow' : 'bg-accent') : dark ? 'bg-on-accent/25' : 'bg-ink/15'}`} />)}
     </span>
   )
@@ -327,7 +336,7 @@ export default function OneTake({ Cta, Anchor }) {
   const tag = (txt, extra = '') => <span className={`block -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-1 text-[14px] font-semibold shadow-sm ring-1 ${extra || 'bg-surface text-ink ring-line'}`}>{txt}</span>
 
   return (
-    <section ref={box} id="story" aria-label="一单怎么走" className="relative -mt-16" style={{ height: '900svh' }}>
+    <section ref={box} id="story" aria-label={tr('一单怎么走', 'How an order works')} className="relative -mt-16" style={{ height: '900svh' }}>
       <span id="top" aria-hidden="true" className="absolute left-0 top-0" />
       <div ref={stage} className={`sticky top-0 h-[100svh] overflow-hidden transition-colors duration-700 ${climax && small ? 'bg-accent-deep' : 'bg-bg'}`}>
         {/* 地图层：整张校园图和路线都在这一层里，镜头只做位移和缩放 */}
@@ -361,13 +370,13 @@ export default function OneTake({ Cta, Anchor }) {
           </motion.div>
 
           {/* 地名牌和人：不跟着镜头放大，只跟着位置走 */}
-          <motion.span className="absolute left-0 top-0 z-10 transition-opacity duration-200" style={{ transform: tIchi, opacity: oIchi }}>{tag('一教')}</motion.span>
-          <motion.span className="absolute left-0 top-0 z-10 transition-opacity duration-200" style={{ transform: tStation, opacity: k >= 7 ? 0 : oStation }}>{tag('菜鸟驿站', k >= 2 && k <= 4 ? 'bg-ink text-bg ring-ink' : '')}</motion.span>
+          <motion.span className="absolute left-0 top-0 z-10 transition-opacity duration-200" style={{ transform: tIchi, opacity: oIchi }}>{tag(tr('一教', 'Teaching Bldg 1'))}</motion.span>
+          <motion.span className="absolute left-0 top-0 z-10 transition-opacity duration-200" style={{ transform: tStation, opacity: k >= 7 ? 0 : oStation }}>{tag(tr('菜鸟驿站', 'Parcel station'), k >= 2 && k <= 4 ? 'bg-ink text-bg ring-ink' : '')}</motion.span>
           <motion.span className="absolute left-0 top-0 z-10 transition-opacity duration-200" style={{ transform: tMei, opacity: oMei }}>
             {/* 小满站在梅园楼前：锚点在脚下，人在上面，名牌在脚下，不和走过来的阿远叠在一起 */}
             <span className="relative block">
               <img src={`${BASE}brand/poster-v1.webp`} width={136} height={240} alt="" className={`absolute bottom-0 left-0 w-auto max-w-none -translate-x-1/2 drop-shadow-[0_10px_10px_rgba(17,40,30,0.25)] ${small ? 'h-[56px]' : 'h-[84px]'}`} />
-              <span className="absolute left-0 top-1.5">{tag('梅园 · 小满')}</span>
+              <span className="absolute left-0 top-1.5">{tag(tr('梅园 · 小满', 'Plum Court · Xiaoman'))}</span>
             </span>
           </motion.span>
           <motion.span className="absolute left-0 top-0 z-10" style={{ transform: tPkg, opacity: pkgAtStation }}>
@@ -384,14 +393,14 @@ export default function OneTake({ Cta, Anchor }) {
             {/* 首屏走完：驿站门口亮出这一单的价值 */}
             {k === 0 && introDone && (
               <motion.span key="detour" className="absolute left-0 top-0 z-30" style={{ transform: tDetour }} initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 380, damping: 24 }}>
-                <span className="block -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[14px] font-bold text-bg shadow-lg">{small ? '只多走 1 分钟' : '顺路，只多走 1 分钟'}</span>
+                <span className="block -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-full bg-ink px-3.5 py-1.5 text-[14px] font-bold text-bg shadow-lg">{small ? tr('只多走 1 分钟', 'Just 1 min extra') : tr('顺路，只多走 1 分钟', 'On the way, 1 min extra')}</span>
               </motion.span>
             )}
             {/* 发布：赏金冻结在平台，锁落在小满身边 */}
             {k === 2 && (
               <motion.span key="lock" className="absolute left-0 top-0 z-30" style={{ transform: tLock }} initial={reduce ? false : { opacity: 0, y: -24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 16, delay: reduce ? 0 : 0.25 }}>
                 <span className="flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-accent px-3 py-1.5 text-[14px] font-bold text-on-accent shadow-lg">
-                  <img src={icon('trust-escrow-v1')} width={22} height={22} alt="" className="size-[22px]" />¥5 冻结在平台
+                  <img src={icon('trust-escrow-v1')} width={22} height={22} alt="" className="size-[22px]" />{tr('¥5 冻结在平台', '¥5 held in escrow')}
                 </span>
               </motion.span>
             )}
@@ -399,7 +408,7 @@ export default function OneTake({ Cta, Anchor }) {
             {k === 4 && (
               <motion.span key="code" className="absolute left-0 top-0 z-30" style={{ transform: tCode }} initial={reduce ? false : { opacity: 0, y: 14, scale: 0.92 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6 }} transition={{ type: 'spring', stiffness: 320, damping: 22, delay: reduce ? 0 : 0.2 }}>
                 <span className={`block -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-ink text-bg shadow-[0_0_0_6px_rgba(143,227,187,0.4),0_0_40px_6px_rgba(143,227,187,0.35),0_20px_40px_-18px_rgba(17,40,30,0.7)] ring-2 ring-accent-glow ${small ? 'px-3 py-2' : 'px-5 py-3'}`}>
-                  <span className="block text-[14px] font-semibold opacity-80">接单后才看得到 · 到驿站报</span>
+                  <span className="block text-[14px] font-semibold opacity-80">{tr('接单后才看得到 · 到驿站报', 'Shown once accepted · Give it at the station')}</span>
                   <span className={`tnum block whitespace-nowrap font-bold tracking-wide ${small ? 'text-[22px] leading-tight' : 'text-[36px] leading-none'}`}>6-2-3108</span>
                 </span>
               </motion.span>
@@ -417,13 +426,24 @@ export default function OneTake({ Cta, Anchor }) {
           <div className={`relative bg-gradient-to-b from-transparent to-bg ${small ? 'h-6' : 'h-14'}`}>
             {!small && (
               <p className="absolute -top-2 left-1/2 flex w-full max-w-7xl -translate-x-1/2 items-center justify-end gap-3 px-8 text-[14px] font-semibold text-ink/80">
-                <span className="flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 shadow-sm ring-1 ring-line"><span className="h-1 w-6 rounded-full bg-ink" />阿远本来就要走的路</span>
-                <span className="flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 shadow-sm ring-1 ring-line"><span className="h-1.5 w-6 rounded-full bg-accent" />顺手捎上你的快递</span>
+                <span className="flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 shadow-sm ring-1 ring-line"><span className="h-1 w-6 rounded-full bg-ink" />{tr('阿远本来就要走的路', 'The walk Yuan takes anyway')}</span>
+                <span className="flex items-center gap-2 rounded-full bg-surface/90 px-3 py-1 shadow-sm ring-1 ring-line"><span className="h-1.5 w-6 rounded-full bg-accent" />{tr('顺手捎上你的快递', 'Your parcel, picked up on the way')}</span>
               </p>
             )}
           </div>
           <div className="bg-bg">
             <div className="mx-auto max-w-7xl px-4 pb-10 md:px-8">
+              {/* 英文句子比中文长一倍多，字号小一档，两行都能放下 */}
+              {EN ? (
+                <h1 className={`font-display leading-[1.02] ${small ? (EN ? 'text-[clamp(28px,8.4vw,44px)]' : 'text-[clamp(32px,9.4vw,44px)]') : 'text-[clamp(48px,min(5.6vw,9svh),88px)]'}`}>
+                  <span className="block"><Chars text="You're walking past anyway." delay={reduce ? 0 : 0.3} step={0.1} reduce={reduce} /></span>
+                  <span className="block">
+                    <Chars text="Grab it " delay={reduce ? 0 : 0.6} step={0.1} reduce={reduce} />
+                    <KeyLine on={introDone} reduce={reduce}><Chars text="on the way" delay={reduce ? 0 : 0.8} step={0.1} reduce={reduce} /></KeyLine>
+                    <span className="whitespace-nowrap"><Chars text="." delay={reduce ? 0 : 1.1} reduce={reduce} /><Drop on={introDone} reduce={reduce} delay={0.1} /></span>
+                  </span>
+                </h1>
+              ) : (
               <h1 className={`font-display leading-[0.98] ${small ? 'text-[clamp(40px,12.8vw,56px)]' : 'text-[clamp(56px,min(7.6vw,11.5svh),112px)]'}`}>
                 <span className="block"><Chars text="本来就要经过" delay={reduce ? 0 : 0.3} step={0.05} reduce={reduce} /><span className="sr-only">，</span></span>
                 <span className="block">
@@ -431,11 +451,12 @@ export default function OneTake({ Cta, Anchor }) {
                   <Chars text="捎一下" delay={reduce ? 0 : 0.75} step={0.05} reduce={reduce} /><Drop on={introDone} reduce={reduce} delay={0.1} />
                 </span>
               </h1>
+              )}
               <motion.div className={small ? 'mt-5' : 'mt-9 flex items-center gap-10'} initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: reduce ? 0 : 1.05, ease }}>
-                <p className={`text-ink/85 ${small ? 'max-w-[34em] text-[16px] leading-relaxed' : 'max-w-[26em] text-[20px] leading-[1.6]'}`}>快递在驿站，你在宿舍。正好路过驿站的同学，下课顺手帮你带上。校内实名，赏金先托管。</p>
-                <div className={`flex shrink-0 items-center gap-5 ${small ? 'mt-4' : ''}`}>
+                <p className={`text-ink/85 ${small ? 'max-w-[34em] text-[16px] leading-relaxed' : 'max-w-[26em] text-[20px] leading-[1.6]'}`}>{tr('快递在驿站，你在宿舍。正好路过驿站的同学，下课顺手帮你带上。校内实名，赏金先托管。', "Your parcel is at the station, you're in your dorm. A classmate walking past after class grabs it for you. Everyone is a verified student, and the reward is held in escrow.")}</p>
+                <div className={`flex shrink-0 items-center gap-5 ${small ? 'mt-4' : ''} ${EN ? 'flex-wrap gap-y-2' : ''}`}>
                   <Cta />
-                  <Anchor to="loop-1" className="inline-flex h-12 items-center gap-1.5 whitespace-nowrap font-semibold text-ink">看看谁顺路<ArrowDown size={16} weight="bold" /></Anchor>
+                  <Anchor to="loop-1" className="inline-flex h-12 items-center gap-1.5 whitespace-nowrap font-semibold text-ink">{tr('看看谁顺路', "See who's on the way")}<ArrowDown size={16} weight="bold" /></Anchor>
                 </div>
               </motion.div>
             </div>
@@ -485,7 +506,7 @@ function Coin({ camV, toScreen, small }) {
 
 // 互评之后：两个人的信用一起涨，大数字落在深绿的画面上，放在路线下面，路线一直看得见
 function Gains({ small, reduce }) {
-  const items = [['阿远 · 跑腿', 3, '70 → 73'], ['小满 · 发单', 2, '88 → 90']]
+  const items = [[tr('阿远 · 跑腿', 'Yuan · Runner'), 3, '70 → 73'], [tr('小满 · 发单', 'Xiaoman · Requester'), 2, '88 → 90']]
   return (
     <div className={`absolute z-30 flex ${small ? 'inset-x-4 top-1/2 -translate-y-[30%] gap-3' : 'left-1/2 top-[42%] -translate-x-[12%] gap-5'}`}>
       {items.map(([who, n, v], i) => (
