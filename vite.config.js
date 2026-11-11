@@ -9,6 +9,6 @@ const noDash = () => ({
 })
 
 export default defineConfig({
-  base: '/campus-errand/',
+  base: '/shunluxia-campus-errand/',
   plugins: [react(), tailwindcss(), noDash()],
 })

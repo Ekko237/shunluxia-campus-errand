@@ -23,7 +23,7 @@ jobs:
       - run: npm run build
       - name: Keep previous builds' assets (cached old HTML can still load)
         run: |
-          BASE=https://ekko237.github.io/campus-errand
+          BASE=https://ekko237.github.io/shunluxia-campus-errand
           T=$(date +%s)
           touch /tmp/hist.txt
           curl -fsSL "$BASE/asset-history.txt?t=$T" -o /tmp/hist.txt || true

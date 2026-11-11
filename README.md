@@ -1,10 +1,48 @@
+# Shunluxia (顺路侠)
+
+**Shunluxia** (顺路侠) is the person who helps because they are already going that way. 顺路 (*shunlu*) means "on the way." 侠 (*xia*) is someone who steps in to help.
+
+This repository is a product prototype for local-life, on-demand delivery. A task goes only to someone already walking that route (顺路派单): the pickup is on a walk they were going to make, and the hall sorts by the extra minutes that walk adds. It is a reference for product managers working on local services. You can click through a landing story, a page of product notes, and a phone and desktop prototype.
+
+People, tasks, and places in the prototype are demo data stored in the browser. The prototype is not a live delivery service. No campus is operating it, and it has no live users.
+
+**Live demo:** https://ekko237.github.io/shunluxia-campus-errand/
+
+English interface: https://ekko237.github.io/shunluxia-campus-errand/?lang=en
+
+The sections below are in Chinese. They cover the screens, the rules inside the prototype, the stack, and the GitHub Pages deploy.
+
+## Run locally
+
+Node.js 22 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+Open the address printed in the terminal (default `http://localhost:5173/shunluxia-campus-errand/`).
+
+```bash
+npm run build
+npm run preview
+```
+
+## License
+
+Code is under the [MIT License](LICENSE).
+
+Third-party assets keep their own licenses: Smiley Sans (SIL OFL 1.1, `public/fonts/smiley-v2/OFL.txt`), Geist (SIL OFL 1.1), and Phosphor Icons (MIT).
+
+---
+
 # 顺路侠 · 校园跑腿互助
 
 本来就要经过，顺手捎一下。
 
 顺路侠是一个校园跑腿互助平台的产品原型。它只把顺路的单派给本来就要走那条路的同学：快递在驿站，你在宿舍，正好下课路过驿站的同学多走 1 分钟就能帮你带上。
 
-**在线体验：** https://ekko237.github.io/campus-errand/
+**在线体验：** https://ekko237.github.io/shunluxia-campus-errand/
 
 <p>
   <img src="docs/home.webp" alt="首页首屏：校园地图上阿远从一教走过驿站，标题「本来就要经过，顺手捎一下」" width="100%">
@@ -20,7 +58,7 @@
 | 产品思考 | `#/thinking` | 为什么只派顺路的单、三个关键数字、接下来做什么 |
 | 可交互原型 | `#/app/start` | 手机版和电脑版两种界面，可以切换发单人和跑腿人身份，自己完整走一单 |
 
-全站有中文和英文两种：中文浏览器默认中文，其余默认英文；顶栏或页脚的「EN / 中文」按钮可以切换，网址加 `?lang=en` 直接打开英文版（[英文版](https://ekko237.github.io/campus-errand/?lang=en)）。
+全站有中文和英文两种：中文浏览器默认中文，其余默认英文；顶栏或页脚的「EN / 中文」按钮可以切换，网址加 `?lang=en` 直接打开英文版（[英文版](https://ekko237.github.io/shunluxia-campus-errand/?lang=en)）。
 
 <p>
   <img src="docs/story.webp" alt="首页第二章：阿远一教下课正好顺路，旁边的凭证卡显示赏金托管和双方信用" width="100%">
@@ -45,7 +83,7 @@
 - **下课提醒。** 下课前 5 分钟推送常走路线上的单。
 - **新手指引。** 第一次进入原型可以「带我走一遍」，指哪点哪，约 2 分钟走完一单，最后能保存一张今日顺路卡。
 
-原型里的数据都是演示用的示例数据，存在浏览器的 localStorage 里（键名 `shunluxia:v3`）。地址后面带上 `?reset=1` 就恢复初始数据，例如 `https://ekko237.github.io/campus-errand/?reset=1#/app/start`。
+原型里的数据都是演示用的示例数据，存在浏览器的 localStorage 里（键名 `shunluxia:v3`）。地址后面带上 `?reset=1` 就恢复初始数据，例如 `https://ekko237.github.io/shunluxia-campus-errand/?reset=1#/app/start`。
 
 ## 使用的技术
 
@@ -64,7 +102,7 @@ npm install
 npm run dev
 ```
 
-打开终端里显示的地址（默认 `http://localhost:5173/campus-errand/`）。
+打开终端里显示的地址（默认 `http://localhost:5173/shunluxia-campus-errand/`）。
 
 构建正式版本：
 
@@ -93,7 +131,7 @@ docs/               README 用的截图
 
 推送到 `main` 分支后，`.github/workflows/deploy.yml` 会构建并发布到 GitHub Pages。部署时会把上一版的打包文件一起带上，`index.html` 里还有一段加载失败就带参数刷新一次的脚本，用来防止浏览器缓存了旧页面时出现白屏。
 
-站点部署在 `/campus-errand/` 子路径下。仓库换了名字的话，要同时改 `vite.config.js` 里的 `base` 和 `index.html` 里写死的 `/campus-errand/` 路径。
+站点部署在 `/shunluxia-campus-errand/` 子路径下。仓库换了名字的话，要同时改 `vite.config.js` 里的 `base`、`index.html` 里写死的 `/shunluxia-campus-errand/` 路径，以及 `.github/workflows/deploy.yml` 里的 Pages 地址。页面用 Hash 路由，地址在 `#` 后面（例如 `#/app/start`）。不要把这个子路径写进 React Router 的 `basename`，否则 `#/` 对不上路由，页面会是空白。
 
 ## 许可证
 
