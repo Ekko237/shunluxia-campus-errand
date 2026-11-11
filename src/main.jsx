@@ -59,6 +59,7 @@ if (/[?&]reset=1\b/.test(window.location.search)) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
+    {/* 子路径在 vite base：/shunluxia-campus-errand/。HashRouter 的 basename 加在 # 后面，设成子路径会让 #/ 匹配失败。 */}
     <HashRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
