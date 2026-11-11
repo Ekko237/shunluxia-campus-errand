@@ -1,15 +1,60 @@
-# Shunluxia (顺路侠)
+<p align="center">
+  English · <a href="README.zh-CN.md">中文</a>
+</p>
+
+<p align="center">
+  <img src="public/brand/logo-v2.png" alt="Shunluxia" width="96" />
+</p>
+
+<h1 align="center">Shunluxia (顺路侠)</h1>
+
+<p align="center">You're walking past anyway. Grab it on the way.</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-24292f?style=flat&amp;logo=github&amp;logoColor=white" alt="MIT License" /></a>
+  &nbsp;
+  <a href="https://ekko237.github.io/shunluxia-campus-errand/"><img src="https://img.shields.io/badge/live_demo-shunluxia-24292f?style=flat" alt="Live demo" /></a>
+</p>
+
+<p align="center">
+  <a href="https://ekko237.github.io/shunluxia-campus-errand/">
+    <img src="docs/home.webp" alt="Home, first screen: on the campus map Yuan walks from Teaching Bldg 1 past the station, under the title &quot;You're walking past anyway. Grab it on the way.&quot;" width="100%" />
+  </a>
+</p>
 
 **Shunluxia** (顺路侠) is the person who helps because they are already going that way. 顺路 (*shunlu*) means "on the way." 侠 (*xia*) is someone who steps in to help.
 
 This repository is an interactive product prototype for local-life, on-demand delivery, built as a reference for product managers working on local services. It matches tasks only to people already walking that route (顺路派单)—sorting the task hall by the extra minutes a pickup adds to a walk they were already going to make. You can click through a landing story, a page of product notes, and a phone and desktop prototype.
+
+Shunluxia is a product prototype of a campus errand mutual-help platform. It only assigns an order to a classmate who was already going to walk that route: the parcel is at the station, you are in the dorm, and a classmate who passes the station right after class can bring it to you with 1 extra minute.
 
 People, tasks, and places in the prototype are demo data stored in the browser. It is not a live delivery service: no campus is operating it, and it has no live users.
 
 * **Live demo:** [https://ekko237.github.io/shunluxia-campus-errand/](https://ekko237.github.io/shunluxia-campus-errand/)
 * **English interface:** [https://ekko237.github.io/shunluxia-campus-errand/?lang=en](https://ekko237.github.io/shunluxia-campus-errand/?lang=en)
 
-The sections below are in Chinese. They cover the screens, product rules, tech stack, and GitHub Pages deployment.
+## What you can see
+
+The site has three parts:
+
+| Page | Address | What it shows |
+| --- | --- | --- |
+| Home | `#/` | A one-take campus map. It follows the runner Yuan through one order, from posting to mutual ratings, in seven chapters that advance as you scroll |
+| Product thinking | `#/thinking` | Why it only assigns on-the-way orders, three key numbers, and what comes next |
+| Interactive prototype | `#/app/start` | Phone and desktop interfaces. Switch between requester and runner and walk through a whole order yourself |
+
+The whole site supports Chinese and English: a Chinese browser shows Chinese by default, and every other browser shows English. The "EN / 中文" button in the top bar or the footer switches the language, and adding `?lang=en` to the URL opens the [English version](https://ekko237.github.io/shunluxia-campus-errand/?lang=en) directly.
+
+<p>
+  <img src="docs/story.webp" alt="Home, chapter two: Yuan's class in Teaching Bldg 1 has just ended and he is already on the way. The card beside him shows reward escrow and both credit scores" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="68%"><img src="docs/desk.webp" alt="Desktop prototype: demo panel on the left, task hall in the middle, on-the-way map on the right" width="100%"></td>
+    <td width="32%"><img src="docs/phone.webp" alt="Task hall of the phone prototype" width="100%"></td>
+  </tr>
+</table>
 
 ## Run locally
 
@@ -22,118 +67,70 @@ npm run dev
 
 Open the URL printed in the terminal (default `http://localhost:5173/shunluxia-campus-errand/`).
 
+Build the production version:
+
 ```bash
 npm run build
 npm run preview
 ```
+
+## Product design
+
+* **Only on-the-way orders.** Runners register the route they usually walk. The task hall sorts by how many extra minutes the order adds on the way, and pickup points are numbered in the order they fall along the route.
+* **The reward is held in escrow first.** The reward is frozen on the platform when the order is posted, and released only after delivery is confirmed. If nobody confirms within 2 hours, it is released automatically.
+* **Campus identity and a credit threshold.** Taking an order requires verification with a student ID or a .edu.cn email. A credit score of 60 can take orders within ¥8, and from 72 the limit opens up to ¥15.
+* **Tiered privacy.** The pickup code, dorm number, and phone number are visible only after the order is accepted, and they hide again when the order ends. Calls go through a masked number.
+* **Proof of delivery.** Check a 4-digit delivery code in person, or take a photo as proof. That record is what a dispute relies on.
+* **Two-way credit.** Runners and requesters each have their own credit rules and tiers. After they rate each other, the credit change is visible right away. During a dispute, the reward stays frozen.
+* **Some requests cannot be posted.** Requests such as taking an exam for someone, or signing in for someone, are blocked when you try to publish them.
+* **After-class reminder.** 5 minutes before class ends, it pushes the orders that sit on the route you usually walk.
+* **First-run guide.** The first time you enter the prototype you can choose "Show me around." It points at each step, walks through one order in about 2 minutes, and at the end you can save a Today's route card.
+
+Data in the prototype is sample data for the demo, stored in the browser's localStorage (key `shunluxia:v3`). Add `?reset=1` to the address to restore the initial data, for example `https://ekko237.github.io/shunluxia-campus-errand/?reset=1#/app/start`.
+
+## Technology used
+
+* React 19 and React Router 7 (hash routing, so it can be deployed to GitHub Pages)
+* Vite 8 and Tailwind CSS 4
+* Motion (a scroll-driven map camera, titles that appear character by character, and small motion throughout)
+* Phosphor Icons. Chinese titles use Smiley Sans (得意黑). Latin text and numbers use Geist
+* Illustrations, the campus map, and most icons are AI-generated images under `public/`. Filenames include a version (for example `campus-map-v3.webp`). When you replace an image, change the filename so the browser does not keep the old one
+
+## Directory structure
+
+```
+src/
+  main.jsx          route entry; the prototype part loads on demand
+  landing/          home and product-thinking pages (OneTake.jsx is the one-take map story)
+  app/              interactive prototype: task hall, publish, order detail, me, first-run guide, demo panel
+  store.jsx         prototype state, and localStorage reads and writes
+  data.js           sample tasks, places, and credit rules
+  campusMap.js      campus map coordinates and the detour-distance calculation
+public/
+  images/ icons/ brand/   generated image assets
+  fonts/smiley-v2/        Smiley Sans, subset by character
+docs/               screenshots used in this README
+```
+
+## Deployment
+
+After a push to the `main` branch, `.github/workflows/deploy.yml` builds the site and publishes it to GitHub Pages. The deploy also brings along the previous build's files. `index.html` includes a script that reloads once, with a parameter, if loading fails, so a browser that cached an old page does not show a blank screen.
+
+The site is deployed under the `/shunluxia-campus-errand/` subpath. If the repository is renamed, update `base` in `vite.config.js`, the hardcoded `/shunluxia-campus-errand/` path in `index.html`, and the Pages URL in `.github/workflows/deploy.yml` together. Pages use hash routing, so the address sits after `#` (for example `#/app/start`). Do not put this subpath in React Router's `basename`. If you do, `#/` will not match a route and the page will be blank.
+
+## Common Questions
+
+**Is this a live delivery service?**  
+No. It is not a live delivery service: no campus is operating it, and it has no live users. People, tasks, and places in the prototype are demo data stored in the browser's localStorage (key `shunluxia:v3`).
+
+**How do I reset the demo data?**  
+Add `?reset=1` to the address to restore the initial data, for example `https://ekko237.github.io/shunluxia-campus-errand/?reset=1#/app/start`.
+
+**What is required to run it?**  
+Node.js 22 or newer.
 
 ## License
 
 Code is under the [MIT License](LICENSE).
 
 Third-party assets keep their own licenses: Smiley Sans (SIL OFL 1.1, `public/fonts/smiley-v2/OFL.txt`), Geist (SIL OFL 1.1), and Phosphor Icons (MIT).
-
----
-
-# 顺路侠 · 校园跑腿互助
-
-本来就要经过，顺手捎一下。
-
-顺路侠是一个校园跑腿互助平台的产品原型。它只把顺路的单派给本来就要走那条路的同学：快递在驿站，你在宿舍，正好下课路过驿站的同学多走 1 分钟就能帮你带上。
-
-**在线体验：** [https://ekko237.github.io/shunluxia-campus-errand/](https://ekko237.github.io/shunluxia-campus-errand/)
-
-<p>
-  <img src="docs/home.webp" alt="首页首屏：校园地图上阿远从一教走过驿站，标题「本来就要经过，顺手捎一下」" width="100%">
-</p>
-
-## 能看到什么
-
-网站分三部分：
-
-| 页面 | 地址 | 内容 |
-| --- | --- | --- |
-| 首页 | `#/` | 一镜到底的校园地图，跟着跑腿人阿远把一单从发布走到互评，七章随滚动推进 |
-| 产品思考 | `#/thinking` | 为什么只派顺路的单、三个关键数字、接下来做什么 |
-| 可交互原型 | `#/app/start` | 手机版和电脑版两种界面，可以切换发单人和跑腿人身份，自己完整走一单 |
-
-全站支持中英文：中文浏览器默认显示中文，其余默认英文。点击顶栏或页脚的「EN / 中文」按钮可切换语言，网址加 `?lang=en` 可直接打开[英文版](https://ekko237.github.io/shunluxia-campus-errand/?lang=en)。
-
-<p>
-  <img src="docs/story.webp" alt="首页第二章：阿远一教下课正好顺路，旁边的凭证卡显示赏金托管和双方信用" width="100%">
-</p>
-
-<table>
-  <tr>
-    <td width="68%"><img src="docs/desk.webp" alt="电脑版原型：左边演示面板，中间任务大厅，右边顺路地图" width="100%"></td>
-    <td width="32%"><img src="docs/phone.webp" alt="手机版原型的任务大厅" width="100%"></td>
-  </tr>
-</table>
-
-## 产品设计
-
-* **只派顺路的单。** 跑腿人登记自己常走的路，大厅按「顺路多走几分钟」排序，取件点在路上按先后编号。
-* **赏金先托管。** 发单时赏金冻结在平台，确认送达才放款；2 小时不确认自动放款。
-* **校内实名和信用门槛。** 学号或 .edu.cn 邮箱认证后才能接单；信用 60 分能接 ¥8 以内的单，72 分起放宽到 ¥15。
-* **隐私分级。** 取件码、宿舍号、电话接单后才可见，订单结束自动隐藏，电话走虚拟号。
-* **送达凭证。** 当面核验 4 位送达码，或拍照留证，纠纷时作为依据。
-* **双向信用。** 跑腿人和发单人各有一套信用规则和档位，互评后信用变化当场可见；申诉期间赏金继续冻结。
-* **发不出去。** 代考、代签到这类违规需求在发布时就被拦下。
-* **下课提醒。** 下课前 5 分钟推送常走路线上的单。
-* **新手指引。** 第一次进入原型可以「带我走一遍」，指哪点哪，约 2 分钟走完一单，最后能保存一张今日顺路卡。
-
-原型里的数据都是演示用的示例数据，存在浏览器的 localStorage 里（键名 `shunluxia:v3`）。地址后加上 `?reset=1` 即可恢复初始数据，例如 `https://ekko237.github.io/shunluxia-campus-errand/?reset=1#/app/start`。
-
-## 使用的技术
-
-* React 19、React Router 7（Hash 路由，方便部署到 GitHub Pages）
-* Vite 8、Tailwind CSS 4
-* Motion（滚动驱动的地图镜头、逐字标题和各处微动效）
-* Phosphor Icons；中文标题字体是得意黑 Smiley Sans，西文和数字是 Geist
-* 插画、校园地图和大部分图标是 AI 生成图，放在 `public/` 下，文件名带版本号（例如 `campus-map-v3.webp`），换图时换文件名，避免浏览器缓存旧图
-
-## 本地运行
-
-需要 Node.js 22 或更新的版本。
-
-```bash
-npm install
-npm run dev
-```
-
-打开终端里显示的地址（默认 `http://localhost:5173/shunluxia-campus-errand/`）。
-
-构建正式版本：
-
-```bash
-npm run build
-npm run preview
-```
-
-## 目录结构
-
-```
-src/
-  main.jsx          路由入口；原型部分按需加载
-  landing/          首页和产品思考页（OneTake.jsx 是一镜到底的地图故事）
-  app/              可交互原型：大厅、发布、订单详情、我的、新手指引、演示面板
-  store.jsx         原型的状态和 localStorage 读写
-  data.js           示例任务、地点、信用规则
-  campusMap.js      校园地图坐标和绕路距离计算
-public/
-  images/ icons/ brand/   生成图素材
-  fonts/smiley-v2/        得意黑字体（按字符分包）
-docs/               README 用的截图
-```
-
-## 部署
-
-推送到 `main` 分支后，`.github/workflows/deploy.yml` 会构建并发布到 GitHub Pages。部署时会带上上一版的打包文件，`index.html` 里还有一段加载失败时带参数刷新一次的脚本，防止浏览器因缓存旧页面而白屏。
-
-站点部署在 `/shunluxia-campus-errand/` 子路径下。如果修改了仓库名，需要同步修改 `vite.config.js` 里的 `base`、`index.html` 里写死的 `/shunluxia-campus-errand/` 路径，以及 `.github/workflows/deploy.yml` 里的 Pages 地址。页面使用 Hash 路由，地址在 `#` 后面（例如 `#/app/start`）。不要把这个子路径写进 React Router 的 `basename`，否则 `#/` 对不上路由，页面会显示空白。
-
-## 许可证
-
-代码按 [MIT 许可证](LICENSE) 开源。
-
-第三方素材按各自的许可证使用：得意黑 Smiley Sans（SIL OFL 1.1，见 `public/fonts/smiley-v2/OFL.txt`）、Geist（SIL OFL 1.1）、Phosphor Icons（MIT）。
